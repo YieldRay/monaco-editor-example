@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>eval</title>
+        <style>
+            * {
+                font-family: Consolas, monospace !important;
+                word-break: break-all;
+            }
+            textarea {
+                display: block;
+                height: 50ch;
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 1rem;
+            }
+            button {
+                width: 100%;
+            }
+            pre {
+                background: rgba(0, 0, 0, 0.1);
+                min-height: 10ch;
+                padding: 1ch;
+                overflow-x: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <textarea>
+(async function() {
+    return 1 + 1
+}())
+            </textarea
+        >
+        <button onClick="handleClick(event)">eval</button>
+        <output>
+            <p><a target="_blank"></a></p>
+            <pre></pre>
+        </output>
+    </body>
+
+    <script>
+        async function eval(code) {
+            const res = await fetch("https://api.val.town/v1/eval/" + encodeURIComponent(code));
+            document.querySelector("a").href = res.url;
+            document.querySelector("a").textContent = res.url;
+            return await res.json();
+        }
+        function loading() {
+            let count = 0;
+            const id = setInterval(() => {
+                if (++count > 3) count = 1;
+                document.querySelector("pre").innerText = `loading${".".repeat(count)}`;
+            }, 300);
+            return () => clearInterval(id);
+        }
+        async function handleClick(event) {
+            const stopLoading = loading();
+            const code = document.querySelector("textarea").value;
+            const result = await eval(code);
+            stopLoading();
+            document.querySelector("pre").innerText = JSON.stringify(result, null, 4);
+        }
+    </script>
+</html>
