@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Editor } from "./Editor";
 import { valTownEvalComplex, valTownEvalURL } from "../utils/valtown";
-import { ICON_HIDE, ICON_LINK, ICON_RUN, ICON_SHOW } from "../utils/icon";
+import { ICON_HIDE, ICON_LINK, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "../utils/icon";
 
 const INIT_CODE = `(async function () {
     const _ = await import("npm:lodash-es");
@@ -20,6 +20,20 @@ export function Container() {
     const OutputRunning = <i style={{ color: "#008080" }}>running...</i>;
     const Output = running ? OutputRunning : OutputFinish;
 
+    const toggle = () => setShow((show) => !show);
+
+    const formatOutput = () => {
+        if (!result.success) return;
+        let output = result.output;
+        try {
+            output = JSON.stringify(JSON.parse(result.output), null, 4);
+        } catch {
+            return;
+        }
+        if (result.output !== output) setResult((r) => ({ ...r, output }));
+        else setResult((r) => ({ ...r, output: JSON.stringify(JSON.parse(r.output)) }));
+    };
+
     const run = async () => {
         setRunning(true);
         setLink(valTownEvalURL(value));
@@ -27,11 +41,27 @@ export function Container() {
             const output = await valTownEvalComplex(value);
             setResult({ success: true, output });
         } catch (e) {
-            setResult({ success: false, output: String(e) });
+            setResult({ success: false, output: (e as Error).message });
         } finally {
             setRunning(false);
         }
     };
+
+    useEffect(() => {
+        const handler = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.altKey && event.key === "n") {
+                run();
+            }
+            if (event.ctrlKey && event.altKey && event.key === "l") {
+                formatOutput();
+            }
+            if (event.ctrlKey && event.key === "\\") {
+                toggle();
+            }
+        };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    });
 
     return (
         <div style={{ height: "100vh" }}>
@@ -63,10 +93,13 @@ export function Container() {
                                 {ICON_LINK}
                             </a>
                         </span>
-                        <span style={{ cursor: "pointer" }} onClick={run}>
+                        <span style={{ cursor: "pointer" }} onClick={formatOutput} title="Ctrl+Alt+L">
+                            {ICON_FORMAT}
+                        </span>
+                        <span style={{ cursor: "pointer" }} onClick={run} title="Ctrl+Alt+N">
                             {ICON_RUN}
                         </span>
-                        <span style={{ cursor: "pointer" }} onClick={() => setShow((show) => !show)}>
+                        <span style={{ cursor: "pointer" }} onClick={toggle} title="Ctrl+\">
                             {show ? ICON_HIDE : ICON_SHOW}
                         </span>
                     </div>
