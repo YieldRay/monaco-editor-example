@@ -1,7 +1,13 @@
 import { FC, useRef, useState, useEffect } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+
+declare global {
+    interface Window {
+        monaco: any;
+        editor: any;
+    }
+}
+
 window.monaco = monaco;
 
 interface Props {
@@ -22,8 +28,7 @@ export const Editor: FC<Props> = (props: Props) => {
                     language: "typescript",
                     automaticLayout: true,
                 });
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                //@ts-ignore
+
                 window.editor = newEditor;
 
                 // 监听文本内容变化事件

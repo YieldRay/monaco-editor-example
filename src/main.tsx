@@ -1,12 +1,18 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import "./style.css";
+import { createRoot } from "react-dom/client";
 import { Container } from "./components/Container";
+import "./style.css";
 import "./userWorker";
 
-ReactDOM.render(
+declare global {
+    const __DEBUG_INFO__: any;
+}
+
+console.info(__DEBUG_INFO__.HEAD);
+console.table(__DEBUG_INFO__.dependencies);
+
+createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
         <Container />
-    </React.StrictMode>,
-    document.getElementById("root")
+    </React.StrictMode>
 );
