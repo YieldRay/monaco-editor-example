@@ -1,25 +1,38 @@
 name: Deploy to Surge.sh
+
 on:
-    push:
-        branches: ["main"]
     workflow_dispatch:
+    push:
+        branches:
+            - main
 
 jobs:
     build-and-deploy:
-        concurrency: ci-${{ github.ref }}
         runs-on: ubuntu-latest
+        concurrency: ci-${{ github.ref }}
+        environment:
+            name: preview
+            url: https://${{ steps.deployment.outputs.preview }}
         steps:
-            - name: Checkout 🛎️
+            - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Install and Build 🔧
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  # cache: 'npm'
+
+            - name: Install and Build
               run: |
                   npm install
                   npm run build
+                  cp dist/index.html dist/200.html
 
-            - name: Deploy 🚀
-              uses: YieldRay/deploy-to-surge-action@v2
+            - name: Deploy
+              id: deployment
+              uses: YieldRay/deploy-to-surge-action@v3
               with:
                   folder: dist
-                  domain: valtown.surge.sh
                   token: ${{ secrets.SURGE_TOKEN }}
+                  domain: monaco-editor-example.naoh.eu.org
