@@ -1,4 +1,4 @@
-import { FC, useRef, useState, useEffect } from "react";
+import { FC, useRef, useEffect } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 declare global {
@@ -15,37 +15,43 @@ interface Props {
     onChange?: (value: string) => void;
 }
 
-export const Editor: FC<Props> = (props: Props) => {
-    const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
     const monacoEl = useRef<HTMLDivElement>(null);
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
     useEffect(() => {
-        if (monacoEl) {
-            setEditor((editor) => {
-                if (editor) return editor;
-                const newEditor = monaco.editor.create(monacoEl.current!, {
-                    value: props.value,
-                    language: "typescript",
-                    automaticLayout: true,
-                });
+        if (!monacoEl.current) return;
 
-                window.editor = newEditor;
+        // A model represents a file that has been opened.
+        const model = monaco.editor.createModel(
+            value,
+            "typescript",
+            // Each model is identified by a URI.
+            monaco.Uri.parse("file:///main.tsx")
+        );
 
-                // 监听文本内容变化事件
-                newEditor.onDidChangeModelContent(() => props.onChange?.(newEditor.getValue()));
+        // An editor is a user facing view of the model.
+        const editor = monaco.editor.create(monacoEl.current!, {
+            model,
+            automaticLayout: true,
+        });
 
-                // 关闭错误
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-                    noSemanticValidation: true,
-                    noSyntaxValidation: true, // This line disables errors in jsx tags like <div>, etc.
-                });
+        window.editor = editor;
+        editorRef.current = editor;
 
-                return newEditor;
-            });
-        }
+        editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
 
-        return () => editor?.dispose();
-    }, [monacoEl.current]);
+        // Turn off the default typescript diagnostics
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            noSemanticValidation: true,
+            noSyntaxValidation: true, // This line disables errors in jsx tags like <div>, etc.
+        });
+
+        return () => {
+            model.dispose();
+            editor.dispose();
+        };
+    }, []);
 
     return <div style={{ width: "100%", height: "100%" }} ref={monacoEl}></div>;
 };

@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
 import { Editor } from "./Editor";
-import { valTownEvalComplex, valTownEvalURL } from "../utils/valtown";
-import { ICON_HIDE, ICON_LINK, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "../utils/icon";
+import { runCode } from "../utils/runcode";
+import { ICON_HIDE, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "../utils/icon";
 
-const INIT_CODE = `(async function () {
-    const _ = await import("npm:lodash-es");
-    return _.shuffle(_.zip([1, 2, 3, 4], [5, 6, 7, 8]));
-    // return any value, and it will appear to the output
-}())`;
+const INIT_CODE = `console.log(Deno.version)`;
 
 export function Container() {
     const [value, setValue] = useState(INIT_CODE);
     const [show, setShow] = useState(true);
     const [result, setResult] = useState({ success: true, output: "" });
     const [running, setRunning] = useState(false);
-    const [link, setLink] = useState(valTownEvalURL());
 
-    const OutputFinish = result.success ? result.output : <i style={{ color: "#ff4081" }}>{result.output}</i>;
+    const OutputFinish = result.success ? (
+        result.output
+    ) : (
+        <i style={{ color: "#ff4081" }}>{result.output}</i>
+    );
     const OutputRunning = <i style={{ color: "#008080" }}>running...</i>;
     const Output = running ? OutputRunning : OutputFinish;
 
@@ -36,9 +35,9 @@ export function Container() {
 
     const run = async () => {
         setRunning(true);
-        setLink(valTownEvalURL(value));
+
         try {
-            const output = await valTownEvalComplex(value);
+            const output = await runCode(value);
             setResult({ success: true, output });
         } catch (e) {
             setResult({ success: false, output: (e as Error).message });
@@ -88,12 +87,11 @@ export function Container() {
                 >
                     <span style={{ textDecoration: "underline" }}>output</span>
                     <div style={{ display: "flex", gap: "1rem" }}>
-                        <span>
-                            <a href={link} target="_blank">
-                                {ICON_LINK}
-                            </a>
-                        </span>
-                        <span style={{ cursor: "pointer" }} onClick={formatOutput} title="Ctrl+Alt+L">
+                        <span
+                            style={{ cursor: "pointer" }}
+                            onClick={formatOutput}
+                            title="Ctrl+Alt+L"
+                        >
                             {ICON_FORMAT}
                         </span>
                         <span style={{ cursor: "pointer" }} onClick={run} title="Ctrl+Alt+N">
