@@ -12,9 +12,11 @@ export interface RegisterCompletionOptions {
 export function registerCompletion(
     editor: monaco.editor.IStandaloneCodeEditor,
     options?: RegisterCompletionOptions
-): monaco.IDisposable {
+) {
     const state = EditorRegisteredState.attachEditor(editor, options);
     return {
         dispose: state.dispose.bind(state),
+        addEventListener: state.addEventListener.bind(state),
+        removeEventListener: state.removeEventListener.bind(state),
     };
 }

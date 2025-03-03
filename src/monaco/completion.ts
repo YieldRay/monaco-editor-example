@@ -1,25 +1,43 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState } from "./state";
+import { chatCompletions } from "./service";
 
 export async function provideInlineCompletions(
-    state: EditorRegisteredState,
+    _state: EditorRegisteredState,
     model: monaco.editor.ITextModel,
     position: monaco.Position,
-    context: monaco.languages.InlineCompletionContext,
-    token: monaco.CancellationToken,
+    _context: monaco.languages.InlineCompletionContext,
+    _token: monaco.CancellationToken,
     signal: AbortSignal
 ): Promise<monaco.languages.ProviderResult<monaco.languages.InlineCompletions>> {
-    const { editor } = state;
-     
+    const textBeforeCursor = model.getValueInRange({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+    });
+    const endLineNumber = model.getLineCount();
+    const textAfterCursor = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn: position.column,
+        endLineNumber,
+        endColumn: model.getLineMaxColumn(endLineNumber),
+    });
 
+    console.debug({ textBeforeCursor, textAfterCursor });
 
-    // TODO
-    return null;
-    // we need to set signal to fetch options
+    const reply = await chatCompletions(textBeforeCursor, textAfterCursor, signal, model.uri.path);
+
     const inlineCompletions: monaco.languages.InlineCompletions = {
         items: [
             {
-                insertText: "-----",
+                insertText: reply,
+                range: new monaco.Range(
+                    position.lineNumber,
+                    position.column,
+                    position.lineNumber,
+                    position.column
+                ),
             },
         ],
     };

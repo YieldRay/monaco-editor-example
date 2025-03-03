@@ -90,6 +90,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
                 return inlineCompletions;
             } catch (e) {
                 if (!(e instanceof Cancelled)) {
+                    console.debug(e);
                     this.dispatchEvent(new CustomEvent("completion-error", { detail: e }));
                 }
                 this.state = "completion-error";
@@ -100,6 +101,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             console.debug("handleItemDidShow", completions, item, updatedInsertText);
             this.state = "completion-pending";
         },
+        // Ctrl/⌘ →
         handlePartialAccept: (completions, item, acceptedCharacters, info) => {
             console.debug("handlePartialAccept", completions, item, acceptedCharacters, info);
         },
