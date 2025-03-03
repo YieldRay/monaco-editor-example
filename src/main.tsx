@@ -5,11 +5,13 @@ import "./style.css";
 import "./userWorker";
 
 declare global {
-    const __DEBUG_INFO__: any;
+    const __HEAD__: any;
+    const __DEPS__: any;
 }
 
-console.info(__DEBUG_INFO__.HEAD);
-console.table(__DEBUG_INFO__.dependencies);
+console.info(__HEAD__);
+console.table(__DEPS__.dependencies);
+console.table(__DEPS__.devDependencies);
 
 createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
