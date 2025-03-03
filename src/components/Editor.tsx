@@ -1,5 +1,6 @@
 import { FC, useRef, useEffect } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import { registerCompletion } from "../monaco/register";
 
 declare global {
     interface Window {
@@ -38,6 +39,7 @@ export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
 
         window.editor = editor;
         editorRef.current = editor;
+        registerCompletion(editor);
 
         editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
 
