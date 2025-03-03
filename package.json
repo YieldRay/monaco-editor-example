@@ -10,9 +10,12 @@
         "deploy": "surge dist valtown.surge.sh"
     },
     "dependencies": {
+        "@tailwindcss/vite": "^4.0.9",
         "monaco-editor": "^0.52.2",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "react-use": "^17.6.0",
+        "tailwindcss": "^4.0.9"
     },
     "devDependencies": {
         "@types/node": "^22.13.8",

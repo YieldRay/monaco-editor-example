@@ -1,8 +1,40 @@
+@import "tailwindcss";
+
 body {
     margin: 0;
 }
+
 html,
 body {
     height: 100vh;
     max-height: 100vh;
+}
+
+.scrollbar {
+    scrollbar-gutter: stable;
+    /* The size of scroll bar */
+    &::-webkit-scrollbar {
+        width: 12px;
+        height: 8px;
+        transition: all 0.3s;
+    }
+    /* The track of scrooll bar */
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    /* The thumb of scroll bar */
+    &::-webkit-scrollbar-thumb {
+        border-radius: 12px;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        border: 3px solid transparent;
+        background-color: rgba(0, 0, 0, 0.1);
+        background-clip: content-box;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
 }
