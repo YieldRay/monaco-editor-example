@@ -6,10 +6,13 @@ import { dependencies, devDependencies } from "./package.json";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: "./",
     plugins: [react(), tailwindcss()],
     define: {
         __HEAD__: JSON.stringify(execSync("git rev-parse HEAD", { encoding: "utf8" })),
         __DEPS__: JSON.stringify({ dependencies, devDependencies }),
     },
-    base: "./",
+    worker: {
+        format: "es",
+    },
 });

@@ -2,8 +2,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { Container } from "./components/Container";
 import "./style.css";
-import "./monaco-features";
-import "./monaco-workers";
 
 declare global {
     const __HEAD__: any;

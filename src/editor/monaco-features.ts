@@ -1,5 +1,14 @@
-import metadata from "monaco-editor/esm/metadata";
-console.log(metadata);
+/**
+ * Load main features
+ * import "monaco-editor/esm/vs/editor/editor.main";
+ *
+ * Load all features
+ * import "monaco-editor/esm/vs/editor/editor.all";
+ *
+ * Show all available metadata
+ * import metadata from "monaco-editor/esm/metadata"
+ * console.log(metadata)
+ */
 
 // anchorSelect
 import "monaco-editor/esm/vs/editor/contrib/anchorSelect/browser/anchorSelect";
@@ -13,9 +22,9 @@ import "monaco-editor/esm/vs/editor/browser/coreCommands";
 // clipboard
 // import "monaco-editor/esm/vs/editor/contrib/clipboard/browser/clipboard";
 // codeAction
-import "monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionContributions";
+// import "monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionContributions";
 // codeEditor
-import "monaco-editor/esm/vs/editor/browser/widget/codeEditor/codeEditorWidget";
+// import "monaco-editor/esm/vs/editor/browser/widget/codeEditor/codeEditorWidget";
 // codelens
 // import "monaco-editor/esm/vs/editor/contrib/codelens/browser/codelensController";
 // colorPicker
@@ -26,7 +35,7 @@ import "monaco-editor/esm/vs/editor/contrib/comment/browser/comment";
 // contextmenu
 // import "monaco-editor/esm/vs/editor/contrib/contextmenu/browser/contextmenu";
 // cursorUndo
-import "monaco-editor/esm/vs/editor/contrib/cursorUndo/browser/cursorUndo";
+// import "monaco-editor/esm/vs/editor/contrib/cursorUndo/browser/cursorUndo";
 // diffEditor
 // import "monaco-editor/esm/vs/editor/browser/widget/diffEditor/diffEditor.contribution";
 // diffEditorBreadcrumbs
@@ -128,6 +137,6 @@ import "monaco-editor/esm/vs/editor/contrib/tokenization/browser/tokenization";
 // wordHighlighter
 import "monaco-editor/esm/vs/editor/contrib/wordHighlighter/browser/wordHighlighter";
 // wordOperations
-import "monaco-editor/esm/vs/editor/contrib/wordOperations/browser/wordOperations";
+// import "monaco-editor/esm/vs/editor/contrib/wordOperations/browser/wordOperations";
 // wordPartOperations
-import "monaco-editor/esm/vs/editor/contrib/wordPartOperations/browser/wordPartOperations";
+// import "monaco-editor/esm/vs/editor/contrib/wordPartOperations/browser/wordPartOperations";

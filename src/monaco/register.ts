@@ -1,5 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState } from "./state";
+import { triggerInlineSuggest } from "./addition";
 
 export interface RegisterCompletionOptions {
     language?: monaco.languages.LanguageSelector;
@@ -16,6 +17,7 @@ export function registerCompletion(
     const state = EditorRegisteredState.attachEditor(editor, options);
     return {
         dispose: state.dispose.bind(state),
+        trigger: () => triggerInlineSuggest(editor),
         addEventListener: state.addEventListener.bind(state),
         removeEventListener: state.removeEventListener.bind(state),
     };

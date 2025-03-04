@@ -1,4 +1,5 @@
-const CURSOR_PLACEHOLDER = "<|developer_cursor_is_here|>";
+import { createPromptMessages } from "./preprocess";
+import { extractFirstCodeBlockContent } from "./postprocess";
 
 /**
  * this is just a demo
@@ -10,14 +11,14 @@ export async function chatCompletions(
     filepath?: string
 ) {
     const models = [
-        "llama3-8b",
-        "llama3.1-8b",
         "llama3.3-70b",
-        "llama3.2-1b",
         "llama3-70b",
-        "llama3.1-405b",
         "llama3.1-tulu3-405b",
-    ].reverse();
+        "llama3.1-405b",
+        "llama3.1-8b",
+        "llama3-8b",
+        "llama3.2-1b",
+    ];
 
     for (const model of models) {
         try {
@@ -27,41 +28,19 @@ export async function chatCompletions(
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model,
-                    messages: [
-                        {
-                            role: "system",
-                            content:
-                                "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context. Never use markdown code block syntax.",
-                        },
-                        {
-                            role: "user",
-                            content:
-                                `**Current file(/root/project/main.c):**\n` +
-                                `char *strcpy(char *dest, const char *source)
-{
-    ${CURSOR_PLACEHOLDER}
-    while (*dest++ = *source++)
-        ;
-    return ptr;
-}`,
-                        },
-                        {
-                            role: "assistant",
-                            content: "char *ptr = dest;",
-                        },
-                        {
-                            role: "user",
-                            content:
-                                `**Current file${filepath ? `(${filepath})` : ""}:**` +
-                                `\n${textBeforeCursor}${CURSOR_PLACEHOLDER}${textAfterCursor}`,
-                        },
-                    ],
+                    messages: createPromptMessages({
+                        textBeforeCursor,
+                        textAfterCursor,
+                        filepath,
+                        systemMessage:
+                            "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context.",
+                    }),
                     max_tokens: 1000,
                 }),
             });
             if (!resp.ok) continue;
             const json = await resp.json();
-            return json.choices[0].message.content as string;
+            return extractFirstCodeBlockContent(json.choices[0].message.content);
         } catch (e) {
             console.error(model, e);
         }

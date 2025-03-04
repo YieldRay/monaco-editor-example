@@ -1,56 +1,39 @@
-export class CompletionFormatter {
-    private formattedCompletion = "";
+export function formatMaybeMarkdownSyntax(text: string) {
+    let result = "";
 
-    constructor(completion: string) {
-        this.formattedCompletion = completion;
+    for (let line of text.split("\n")) {
+        if (line.startsWith("```")) {
+            continue; // remove code blocks
+        }
+        result += line + "\n";
     }
 
-    public setCompletion(completion: string): CompletionFormatter {
-        this.formattedCompletion = completion;
-        return this;
-    }
+    return result.trimEnd();
+}
 
-    public removeInvalidLineBreaks(): CompletionFormatter {
-        this.formattedCompletion = this.formattedCompletion.trimEnd();
-        return this;
-    }
+export function extractFirstCodeBlockContent(text: string) {
+    let result = "";
+    let inFirstCodeBlock = false;
 
-    public removeMarkdownCodeSyntax(): CompletionFormatter {
-        this.formattedCompletion = this.removeMarkdownCodeBlocks(this.formattedCompletion);
-        return this;
-    }
-
-    private removeMarkdownCodeBlocks(text: string): string {
-        const lines = text.split("\n");
-        const result: string[] = [];
-        let inCodeBlock = false;
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const isCodeBlockStart = line.trim().startsWith("```");
-
-            if (isCodeBlockStart && !inCodeBlock) {
-                inCodeBlock = true;
-                continue;
-            }
-
-            if (isCodeBlockStart && inCodeBlock) {
-                inCodeBlock = false;
-                continue;
-            }
-
-            result.push(line);
+    for (let line of text.split("\n")) {
+        if (line.startsWith("```") && !inFirstCodeBlock) {
+            inFirstCodeBlock = true;
+            continue;
         }
 
-        return result.join("\n");
+        if (inFirstCodeBlock) {
+            if (line.startsWith("```")) {
+                break; // end of first code block
+            }
+
+            result += line + "\n";
+        }
     }
 
-    public removeExcessiveNewlines(): CompletionFormatter {
-        this.formattedCompletion = this.formattedCompletion.replace(/\n{3,}/g, "\n\n");
-        return this;
+    if (!inFirstCodeBlock) {
+        // no code block found
+        return text.trimEnd();
     }
 
-    public toString(): string {
-        return this.formattedCompletion;
-    }
+    return result.trimEnd();
 }

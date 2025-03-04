@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useKey } from "react-use";
-import { Editor } from "./Editor";
+import { Editor } from "../editor/Editor";
 import { runCode } from "../utils/runcode";
 import { ICON_HIDE, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "../utils/icon";
 

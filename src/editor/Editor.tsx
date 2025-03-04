@@ -2,14 +2,9 @@ import { FC, useRef, useEffect } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { registerCompletion } from "../monaco/register";
 
-declare global {
-    interface Window {
-        monaco: any;
-        editor: any;
-    }
-}
-
-window.monaco = monaco;
+import "./monaco-features";
+import "./monaco-languages";
+import "./monaco-workers";
 
 interface Props {
     value?: string;
@@ -57,3 +52,12 @@ export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
 
     return <div style={{ width: "100%", height: "100%" }} ref={monacoEl}></div>;
 };
+
+declare global {
+    interface Window {
+        monaco: any;
+        editor: any;
+    }
+}
+
+window.monaco = monaco;
