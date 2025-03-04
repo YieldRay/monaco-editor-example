@@ -11,6 +11,7 @@ export function Container() {
     const [show, setShow] = useState(true);
     const [result, setResult] = useState({ success: true, output: "" });
     const [running, setRunning] = useState(false);
+    const [state, setState] = useState("idle");
 
     const toggle = () => setShow((show) => !show);
 
@@ -45,7 +46,7 @@ export function Container() {
     return (
         <div className="h-[100vh]">
             <div className={`${show ? "h-[80vh]" : "h-[calc(80vh+calc(20vh-2rem))]"}`}>
-                <Editor value={value} onChange={setValue}></Editor>
+                <Editor value={value} onChange={setValue} onState={setState} />
             </div>
             <div
                 className={`box-border overflow-clip ${
@@ -58,7 +59,7 @@ export function Container() {
                 }}
             >
                 <header className="px-2 py-1 flex items-center justify-between">
-                    <span className="underline">output</span>
+                    <span className="underline">output ({state})</span>
                     <div className="flex gap-4">
                         <span className="cursor-pointer" onClick={formatOutput} title="Ctrl+Alt+L">
                             {ICON_FORMAT}

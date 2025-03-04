@@ -18,7 +18,32 @@ export function registerCompletion(
     return {
         dispose: state.dispose.bind(state),
         trigger: () => triggerInlineSuggest(editor),
-        addEventListener: state.addEventListener.bind(state),
+        addEventListener: state.addEventListener.bind(state) as AddEventListener,
         removeEventListener: state.removeEventListener.bind(state),
     };
+}
+
+interface AddEventListener {
+    (
+        type: "change",
+        callback: $EventListenerOrEventListenerObject<
+            | "prepare-completion"
+            | "completion-pending"
+            | "completion-error"
+            | "completion-done"
+            | "idle"
+        > | null
+    ): void;
+
+    (type: "error", callback: $EventListenerOrEventListenerObject<unknown> | null): void;
+}
+
+type $EventListenerOrEventListenerObject<T> = $EventListener<T> | $EventListenerObject<T>;
+
+interface $EventListener<T> {
+    (evt: CustomEvent<T>): void;
+}
+
+interface $EventListenerObject<T> {
+    handleEvent(object: CustomEvent<T>): void;
 }

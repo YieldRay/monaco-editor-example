@@ -31,7 +31,10 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.timeout = options?.timeout || 10_000;
     }
 
-    static attachEditor(
+    /**
+     * use this method to attach the editor
+     */
+    public static attachEditor(
         editor: monaco.editor.IStandaloneCodeEditor,
         options?: RegisterCompletionOptions
     ) {
@@ -54,20 +57,22 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         }
     }
 
-    private cancelLastInlineCompletion() {
-        this.lastInlineCompletionAC?.abort(new Cancelled());
-        clearTimeout(this.lastInlineCompletionTO);
-    }
-
     private lastInlineCompletionAC?: AbortController;
     private lastInlineCompletionTO?: ReturnType<typeof setTimeout>;
     private inlineCompletionsProvider: monaco.languages.InlineCompletionsProvider = {
         provideInlineCompletions: async (model, position, context, token) => {
             // we only provide completions for the registered editor (model)
             if (model !== this.editor.getModel()) return null;
-            console.debug("provideInlineCompletions", model, position, context, token);
+
+            // "completion-loading" means the completion is still showing, maybe partial accept
+            if (this.state === "completion-loading") return null;
+
+            console.debug("provideInlineCompletions", { model, position, context, token });
+
             // cancel the last request
-            this.cancelLastInlineCompletion();
+            this.lastInlineCompletionAC?.abort(new Cancelled());
+            clearTimeout(this.lastInlineCompletionTO);
+            this.state = "completion-loading";
 
             const ac = new AbortController();
             this.lastInlineCompletionAC = ac;
@@ -81,32 +86,35 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             });
 
             try {
-                this.state = "prepare-completion";
                 const inlineCompletions = await Promise.race([
                     aborted,
                     this.provideInlineCompletions(model, position, context, token, ac.signal),
                 ]);
-                this.state = "completion-pending";
                 return inlineCompletions;
             } catch (e) {
                 if (!(e instanceof Cancelled)) {
-                    console.debug(e);
+                    console.debug("provideInlineCompletions error", e);
                     this.dispatchEvent(new CustomEvent("completion-error", { detail: e }));
+                    if (this.state !== "completion-loading" && this.state !== "completion-ready") {
+                        // if there is no new completion
+                        this.state = "completion-error";
+                    }
+                } else {
+                    this.state = "idle";
                 }
-                this.state = "completion-error";
                 return null;
             }
         },
         handleItemDidShow: (completions, item, updatedInsertText) => {
-            console.debug("handleItemDidShow", completions, item, updatedInsertText);
-            this.state = "completion-pending";
+            this.state = "completion-ready";
+            console.debug("handleItemDidShow", { completions, item, updatedInsertText });
         },
         // Ctrl/⌘ →
         handlePartialAccept: (completions, item, acceptedCharacters, info) => {
-            console.debug("handlePartialAccept", completions, item, acceptedCharacters, info);
+            console.debug("handlePartialAccept", { completions, item, acceptedCharacters, info });
         },
         freeInlineCompletions: (completions) => {
-            console.debug("freeInlineCompletions", completions);
+            console.debug("freeInlineCompletions", { completions });
         },
     };
 
@@ -129,8 +137,12 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.registerInlineCompletionsProviderResult?.dispose();
     }
 
-    private _state: "prepare-completion" | "completion-pending" | "completion-error" | "typing" =
-        "typing";
+    private _state:
+        | "completion-loading"
+        | "completion-ready"
+        | "completion-error"
+        | "completion-done"
+        | "idle" = "idle";
 
     private set state(s: typeof this._state) {
         this._state = s;

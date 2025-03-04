@@ -1,4 +1,4 @@
-import { FC, useRef, useEffect } from "react";
+import { FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { registerCompletion } from "../monaco/register";
 
@@ -9,11 +9,14 @@ import "./monaco-workers";
 interface Props {
     value?: string;
     onChange?: (value: string) => void;
+    onState?: (state: string) => void;
 }
 
-export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
+export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
     const monacoEl = useRef<HTMLDivElement>(null);
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+    const [state, setState] = useState("typing");
 
     useEffect(() => {
         if (!monacoEl.current) return;
@@ -34,8 +37,12 @@ export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
 
         window.editor = editor;
         editorRef.current = editor;
-        registerCompletion(editor);
+        const instance = registerCompletion(editor);
 
+        instance.addEventListener("change", (event) => {
+            setState(event.detail);
+            onState?.(event.detail);
+        });
         editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
 
         // Turn off the default typescript diagnostics
@@ -50,7 +57,7 @@ export const Editor: FC<Props> = ({ value = "", onChange }: Props) => {
         };
     }, []);
 
-    return <div style={{ width: "100%", height: "100%" }} ref={monacoEl}></div>;
+    return <div style={{ width: "100%", height: "100%" }} ref={monacoEl} data-state={state}></div>;
 };
 
 declare global {

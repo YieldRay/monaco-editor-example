@@ -11,8 +11,8 @@ export async function chatCompletions(
     filepath?: string
 ) {
     const models = [
-        "llama3.3-70b",
         "llama3-70b",
+        "llama3.3-70b",
         "llama3.1-tulu3-405b",
         "llama3.1-405b",
         "llama3.1-8b",
@@ -26,6 +26,7 @@ export async function chatCompletions(
                 signal,
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                // https://platform.openai.com/docs/api-reference/chat/create
                 body: JSON.stringify({
                     model,
                     messages: createPromptMessages({
@@ -35,7 +36,10 @@ export async function chatCompletions(
                         systemMessage:
                             "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context.",
                     }),
-                    max_tokens: 1000,
+                    max_completion_tokens: 1000,
+                    frequency_penalty: 0.5,
+                    presence_penalty: -0.5,
+                    temperature: 0.8,
                 }),
             });
             if (!resp.ok) continue;
