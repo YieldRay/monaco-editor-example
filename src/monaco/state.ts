@@ -59,6 +59,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
 
     private lastInlineCompletionAC?: AbortController;
     private lastInlineCompletionTO?: ReturnType<typeof setTimeout>;
+    private cleanLastDelay?: VoidFunction;
     private inlineCompletionsProvider: monaco.languages.InlineCompletionsProvider = {
         provideInlineCompletions: async (model, position, context, token) => {
             // we only provide completions for the registered editor (model)
@@ -69,14 +70,27 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             // cancel the last request
             this.lastInlineCompletionAC?.abort(new Cancelled());
             clearTimeout(this.lastInlineCompletionTO);
+            this.cleanLastDelay?.();
 
             // prepare a new request
             const ac = new AbortController();
             this.lastInlineCompletionAC = ac;
 
+            // waiting for delay
             this.state = "completion-delay";
-            await new Promise((resolve) => setTimeout(resolve, this.delay));
+            const { resolve, reject, promise: delayPromise } = promiseWithResolvers();
+            const timeoutId = setTimeout(resolve, this.delay);
+            this.cleanLastDelay = () => {
+                clearTimeout(timeoutId);
+                reject(); // must resolve/reject the promise to prevent memory leak
+            };
+            try {
+                await delayPromise;
+            } catch {
+                return null;
+            }
 
+            // check if it's allowed to continue
             if (ac.signal.aborted) return null;
             this.state = "completion-loading";
 
@@ -137,6 +151,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         Reflect.deleteProperty(this.editor, EDITOR_KEY);
         this.registerInlineCompletionsProviderResult?.dispose();
         clearTimeout(this.lastInlineCompletionTO);
+        this.cleanLastDelay?.();
     }
 
     private _state:
@@ -160,4 +175,16 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     ): Promise<monaco.languages.ProviderResult<monaco.languages.InlineCompletions>> {
         return provideInlineCompletions(this, model, position, context, token, signal);
     }
+}
+
+function promiseWithResolvers<T>() {
+    // @ts-ignore
+    if ("withResolvers" in Promise) return Promise.withResolvers<T>();
+    let resolve: (value: T | PromiseLike<T>) => void;
+    let reject: (reason?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve: resolve!, reject: reject! };
 }
