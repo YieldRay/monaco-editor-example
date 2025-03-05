@@ -1,4 +1,4 @@
-import { createPromptMessages } from "./preprocess";
+import { createPromptMessages, systemMessage } from "./preprocess";
 import { extractFirstCodeBlockContent } from "./postprocess";
 
 /**
@@ -10,6 +10,36 @@ export async function chatCompletions(
     signal?: AbortSignal,
     filepath?: string
 ) {
+    const params = {
+        messages: createPromptMessages({
+            textBeforeCursor,
+            textAfterCursor,
+            filepath,
+            systemMessage,
+        }),
+        max_completion_tokens: 1000,
+        frequency_penalty: 0.5,
+        presence_penalty: -0.5,
+        temperature: 0.8,
+    };
+    try {
+        const resp = await fetch("https://text.pollinations.ai/openai", {
+            headers: {
+                accept: "application/json",
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "qwen-coder",
+                ...params,
+            }),
+            method: "POST",
+        });
+        if (resp.ok) {
+            const json = await resp.json();
+            return extractFirstCodeBlockContent(json.choices[0].message.content);
+        }
+    } catch {}
+
     const models = [
         "llama3-70b",
         "llama3.3-70b",
@@ -29,17 +59,7 @@ export async function chatCompletions(
                 // https://platform.openai.com/docs/api-reference/chat/create
                 body: JSON.stringify({
                     model,
-                    messages: createPromptMessages({
-                        textBeforeCursor,
-                        textAfterCursor,
-                        filepath,
-                        systemMessage:
-                            "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context.",
-                    }),
-                    max_completion_tokens: 1000,
-                    frequency_penalty: 0.5,
-                    presence_penalty: -0.5,
-                    temperature: 0.8,
+                    ...params,
                 }),
             });
             if (!resp.ok) continue;

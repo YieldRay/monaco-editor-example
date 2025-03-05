@@ -26,8 +26,8 @@ export function createUserMessage(context: {
     return user;
 }
 
-const systemMessage =
-    "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context.";
+export const systemMessage =
+    "You are an expert code assistant completing code in an editor. Provide concise, accurate code that seamlessly integrates with the existing context. Return CODE ONLY and NO extra markdown code block is required.";
 
 export function createPromptMessages(context: {
     textBeforeCursor: string;

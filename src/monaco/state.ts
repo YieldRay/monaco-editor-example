@@ -63,39 +63,41 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         provideInlineCompletions: async (model, position, context, token) => {
             // we only provide completions for the registered editor (model)
             if (model !== this.editor.getModel()) return null;
-
-            // "completion-loading" means the completion is still showing, maybe partial accept
-            if (this.state === "completion-loading") return null;
-
+            // control flow goes here, means that user has typed a character
             console.debug("provideInlineCompletions", { model, position, context, token });
 
             // cancel the last request
             this.lastInlineCompletionAC?.abort(new Cancelled());
             clearTimeout(this.lastInlineCompletionTO);
-            this.state = "completion-loading";
 
+            // prepare a new request
             const ac = new AbortController();
             this.lastInlineCompletionAC = ac;
 
-            this.lastInlineCompletionTO = setTimeout(() => {
-                ac.abort(new Cancelled());
-            }, this.timeout);
+            this.state = "completion-delay";
+            await new Promise((resolve) => setTimeout(resolve, this.delay));
 
-            const aborted = new Promise<never>((_, reject) => {
-                ac.signal.addEventListener("abort", reject);
-            });
+            if (ac.signal.aborted) return null;
+            this.state = "completion-loading";
+
+            // set the request timeout
+            this.lastInlineCompletionTO = setTimeout(() => ac.abort(new Cancelled()), this.timeout);
+            const aborted = new Promise<never>((_, reject) =>
+                ac.signal.addEventListener("abort", reject)
+            );
 
             try {
                 const inlineCompletions = await Promise.race([
                     aborted,
                     this.provideInlineCompletions(model, position, context, token, ac.signal),
                 ]);
+                this.state = "completion-ready";
                 return inlineCompletions;
             } catch (e) {
                 if (!(e instanceof Cancelled)) {
                     console.debug("provideInlineCompletions error", e);
                     this.dispatchEvent(new CustomEvent("completion-error", { detail: e }));
-                    if (this.state !== "completion-loading" && this.state !== "completion-ready") {
+                    if (!ac.signal.aborted) {
                         // if there is no new completion
                         this.state = "completion-error";
                     }
@@ -106,7 +108,6 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             }
         },
         handleItemDidShow: (completions, item, updatedInsertText) => {
-            this.state = "completion-ready";
             console.debug("handleItemDidShow", { completions, item, updatedInsertText });
         },
         // Ctrl/⌘ →
@@ -135,13 +136,14 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     dispose(): void {
         Reflect.deleteProperty(this.editor, EDITOR_KEY);
         this.registerInlineCompletionsProviderResult?.dispose();
+        clearTimeout(this.lastInlineCompletionTO);
     }
 
     private _state:
+        | "completion-delay"
         | "completion-loading"
         | "completion-ready"
         | "completion-error"
-        | "completion-done"
         | "idle" = "idle";
 
     private set state(s: typeof this._state) {
