@@ -42,7 +42,7 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
 
         window.editor = editor;
         editorRef.current = editor;
-        const instance = registerCompletion(editor);
+        const instance = registerCompletion(editor, { loadingCursor: true });
 
         instance.addEventListener("change", (event) => {
             setState(event.detail);

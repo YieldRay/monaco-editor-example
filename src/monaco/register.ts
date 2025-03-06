@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { EditorRegisteredState } from "./state";
+import { EditorRegisteredState, type State } from "./state";
 import { triggerInlineSuggest } from "./addition";
 
 export interface RegisterCompletionOptions {
@@ -8,6 +8,8 @@ export interface RegisterCompletionOptions {
     delay?: number;
     /** @default 10_000 */
     timeout?: number;
+    /** replace the cursor with a spinning ring when loading, so you don't need implement it in your own */
+    loadingCursor?: boolean;
     /**
      * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions
      *
@@ -41,17 +43,7 @@ export function registerCompletion(
 }
 
 interface AddEventListener {
-    (
-        type: "change",
-        callback: $EventListenerOrEventListenerObject<
-            | "prepare-completion"
-            | "completion-pending"
-            | "completion-error"
-            | "completion-done"
-            | "idle"
-        > | null
-    ): void;
-
+    (type: "change", callback: $EventListenerOrEventListenerObject<State> | null): void;
     (type: "error", callback: $EventListenerOrEventListenerObject<unknown> | null): void;
 }
 

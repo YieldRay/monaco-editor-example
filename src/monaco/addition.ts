@@ -24,3 +24,55 @@ export function addAction({
         ...descriptor,
     });
 }
+
+export function getCursorDomNode(editor: monaco.editor.ICodeEditor) {
+    return editor.getDomNode()?.querySelector(".cursors-layer .cursor") as HTMLElement | undefined;
+}
+
+export function setStyle(
+    el: { style: CSSStyleDeclaration },
+    style: Partial<CSSStyleDeclaration>
+): VoidFunction {
+    const saved: Partial<CSSStyleDeclaration> = {};
+    for (const [k, v] of Object.entries(style)) {
+        Reflect.set(saved, k, Reflect.get(el, k));
+        Reflect.set(el, k, v);
+    }
+    return () => {
+        for (const [k, v] of Object.entries(saved)) {
+            Reflect.set(el, k, v);
+        }
+    };
+}
+
+export function adoptStyleSheet(css: string) {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    document.adoptedStyleSheets.push(sheet);
+    return sheet;
+}
+
+export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunction {
+    const cursor = getCursorDomNode(editor);
+    if (!cursor) return noop;
+
+    const classname = "cursor-my-monaco-loading";
+    cursor.classList.add(classname);
+    const sheet = adoptStyleSheet(/*css*/ `.${CSS.escape(classname)} {
+            position: relative !important;
+            visibility: visible !important;
+            overflow: visible !important;
+            background-color: transparent !important;
+        }`);
+    const style = ` style="position: absolute; top: 50%; transform: translateY(-50%)"`;
+    const fontSize = editor.getOption(monaco.editor.EditorOption.fontSize);
+    const svgSpinners270RingWithBg: string = `<svg xmlns="http://www.w3.org/2000/svg" width="${fontSize}" height="${fontSize}" viewBox="0 0 24 24"${style}><!-- Icon from SVG Spinners by Utkarsh Verma - https://github.com/n3r4zzurr0/svg-spinners/blob/main/LICENSE --><path fill="#888888" d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>`;
+    cursor.innerHTML = svgSpinners270RingWithBg;
+
+    return () => {
+        cursor.innerHTML = "";
+        sheet.replaceSync("");
+    };
+}
+
+const noop: VoidFunction = () => {};

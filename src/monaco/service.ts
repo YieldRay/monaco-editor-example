@@ -63,9 +63,7 @@ export async function chatCompletions(
             if (!resp.ok) continue;
             const json = await resp.json();
             return extractFirstCodeBlockContent(json.choices[0].message.content);
-        } catch (e) {
-            console.error(model, e);
-        }
+        } catch {}
     }
 
     throw new Error("Failed to get completions");

@@ -1,8 +1,16 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { RegisterCompletionOptions } from "./register";
 import { provideInlineCompletions } from "./completion";
+import { setCursorToLoading } from "./addition";
 
 const EDITOR_KEY = Symbol("EDITOR_KEY");
+
+export type State =
+    | "completion-delay"
+    | "completion-loading"
+    | "completion-ready"
+    | "completion-error"
+    | "idle";
 
 class Cancelled<T = never> extends Error {
     name = "Cancelled";
@@ -31,6 +39,22 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.editor = editor;
         this.delay = options?.delay || 400;
         this.timeout = options?.timeout || 10_000;
+
+        if (options?.loadingCursor) {
+            this.addEventListener("change", (e) => {
+                const state = (e as CustomEvent).detail as State;
+                if (state === "completion-loading") {
+                    this.setCursorToLoading();
+                } else {
+                    this.setCursorToLoadingCleanup?.();
+                }
+            });
+        }
+    }
+    private setCursorToLoadingCleanup?: VoidFunction;
+    private setCursorToLoading() {
+        this.setCursorToLoadingCleanup?.();
+        this.setCursorToLoadingCleanup = setCursorToLoading(this.editor);
     }
 
     /**
@@ -166,12 +190,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.cleanLastDelay?.();
     }
 
-    private _state:
-        | "completion-delay"
-        | "completion-loading"
-        | "completion-ready"
-        | "completion-error"
-        | "idle" = "idle";
+    private _state: State = "idle";
 
     private set state(s: typeof this._state) {
         this._state = s;
