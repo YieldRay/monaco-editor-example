@@ -4,10 +4,12 @@ import { provideInlineCompletions } from "./completion";
 
 const EDITOR_KEY = Symbol("EDITOR_KEY");
 
-class Cancelled extends Error {
+class Cancelled<T = never> extends Error {
     name = "Cancelled";
-    constructor() {
+    reason?: T;
+    constructor(reason?: T) {
         super("Cancelled");
+        this.reason = reason;
     }
 }
 
@@ -68,57 +70,66 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             console.debug("provideInlineCompletions", { model, position, context, token });
 
             // cancel the last request
-            this.lastInlineCompletionAC?.abort(new Cancelled());
+            this.lastInlineCompletionAC?.abort(new Cancelled("abort by new request"));
             clearTimeout(this.lastInlineCompletionTO);
             this.cleanLastDelay?.();
 
             // prepare a new request
             const ac = new AbortController();
             this.lastInlineCompletionAC = ac;
+            const aborted = new Promise<never>((_, reject) =>
+                ac.signal.addEventListener("abort", reject)
+            );
+            token.onCancellationRequested(() => ac.abort(new Cancelled("onCancellationRequested")));
 
             // waiting for delay
             this.state = "completion-delay";
-            const { resolve, reject, promise: delayPromise } = promiseWithResolvers();
+            const { resolve, reject, promise: delayPromise } = promiseWithResolvers<void>();
             const timeoutId = setTimeout(resolve, this.delay);
             this.cleanLastDelay = () => {
                 clearTimeout(timeoutId);
                 reject(); // must resolve/reject the promise to prevent memory leak
             };
             try {
-                await delayPromise;
+                await Promise.race([aborted, delayPromise]);
             } catch {
                 return null;
             }
 
-            // check if it's allowed to continue
-            if (ac.signal.aborted) return null;
+            // now we can start the request
             this.state = "completion-loading";
 
             // set the request timeout
-            this.lastInlineCompletionTO = setTimeout(() => ac.abort(new Cancelled()), this.timeout);
-            const aborted = new Promise<never>((_, reject) =>
-                ac.signal.addEventListener("abort", reject)
+            this.lastInlineCompletionTO = setTimeout(
+                () => ac.abort(new Cancelled("request timeout")),
+                this.timeout
             );
 
             try {
                 const inlineCompletions = await Promise.race([
                     aborted,
-                    this.provideInlineCompletions(model, position, context, token, ac.signal),
+                    this.provideInlineCompletions(
+                        model,
+                        position,
+                        context,
+                        token,
+                        ac.signal // pass the signal, this is useful for aborting the `fetch`
+                    ),
                 ]);
+                // request is completed, handleItemDidShow will be called
                 this.state = "completion-ready";
                 return inlineCompletions;
-            } catch (e) {
-                if (!(e instanceof Cancelled)) {
-                    console.debug("provideInlineCompletions error", e);
-                    this.dispatchEvent(new CustomEvent("completion-error", { detail: e }));
-                    if (!ac.signal.aborted) {
-                        // if there is no new completion
-                        this.state = "completion-error";
-                    }
-                } else {
-                    this.state = "idle";
+            } catch (reason) {
+                if (reason instanceof Cancelled) {
+                    return null;
                 }
-                return null;
+
+                console.debug("provideInlineCompletions error", reason);
+                this.dispatchEvent(new CustomEvent("completion-error", { detail: reason }));
+                if (ac === this.lastInlineCompletionAC) {
+                    // make sure there is no new completion
+                    this.state = "completion-error";
+                }
             }
         },
         handleItemDidShow: (completions, item, updatedInsertText) => {
@@ -134,6 +145,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     };
 
     private registerInlineCompletionsProviderResult?: monaco.IDisposable;
+    /** this function should also be called after the language change */
     private registerInlineCompletionsProvider() {
         // we only keep one inlineCompletionsProvider
         this.registerInlineCompletionsProviderResult?.dispose();
@@ -166,20 +178,19 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.dispatchEvent(new CustomEvent("change", { detail: s }));
     }
 
-    provideInlineCompletions(
+    private provideInlineCompletions(
         model: monaco.editor.ITextModel,
         position: monaco.Position,
         context: monaco.languages.InlineCompletionContext,
         token: monaco.CancellationToken,
         signal: AbortSignal
-    ): Promise<monaco.languages.ProviderResult<monaco.languages.InlineCompletions>> {
-        return provideInlineCompletions(this, model, position, context, token, signal);
+    ): monaco.languages.ProviderResult<monaco.languages.InlineCompletions> {
+        return provideInlineCompletions(model, position, context, token, signal);
     }
 }
 
 function promiseWithResolvers<T>() {
-    // @ts-ignore
-    if ("withResolvers" in Promise) return Promise.withResolvers<T>();
+    // if ("withResolvers" in Promise) return Promise.withResolvers<T>();
     let resolve: (value: T | PromiseLike<T>) => void;
     let reject: (reason?: any) => void;
     const promise = new Promise<T>((res, rej) => {

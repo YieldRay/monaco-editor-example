@@ -8,6 +8,23 @@ export interface RegisterCompletionOptions {
     delay?: number;
     /** @default 10_000 */
     timeout?: number;
+    /**
+     * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions
+     *
+     * Provides inline completion items for the given position and document.
+     * If inline completions are enabled, this method will be called whenever the user stopped typing.
+     * It will also be called when the user explicitly triggers inline completions or explicitly asks for the next or previous inline completion.
+     * In that case, all available inline completions should be returned.
+     * context.triggerKind can be used to distinguish between these scenarios.
+     *
+     * Note that debouncing and many features are already implemented,
+     * so you don't need reimplement it again */
+    provideInlineCompletions?: (
+        model: monaco.editor.ITextModel,
+        position: monaco.Position,
+        context: monaco.languages.InlineCompletionContext,
+        token: monaco.CancellationToken
+    ) => monaco.languages.ProviderResult<monaco.languages.InlineCompletions>;
 }
 
 export function registerCompletion(

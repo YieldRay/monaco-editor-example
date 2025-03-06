@@ -2,7 +2,12 @@ import { FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { registerCompletion } from "../monaco/register";
 
-import "./monaco-features";
+if (import.meta.env.DEV) {
+    await import("monaco-editor");
+} else {
+    // import "./monaco-features";
+    await import("./monaco-features");
+}
 import "./monaco-languages";
 import "./monaco-workers";
 

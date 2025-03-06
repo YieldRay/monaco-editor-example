@@ -24,15 +24,13 @@ export async function chatCompletions(
     };
     try {
         const resp = await fetch("https://text.pollinations.ai/openai", {
-            headers: {
-                accept: "application/json",
-                "content-type": "application/json",
-            },
+            signal,
+            method: "POST",
+            headers: { "content-type": "application/json" },
             body: JSON.stringify({
                 model: "qwen-coder",
                 ...params,
             }),
-            method: "POST",
         });
         if (resp.ok) {
             const json = await resp.json();

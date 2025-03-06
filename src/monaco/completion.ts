@@ -1,15 +1,13 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { EditorRegisteredState } from "./state";
 import { chatCompletions } from "./service";
 
 export async function provideInlineCompletions(
-    _state: EditorRegisteredState,
     model: monaco.editor.ITextModel,
     position: monaco.Position,
     _context: monaco.languages.InlineCompletionContext,
     _token: monaco.CancellationToken,
     signal: AbortSignal
-): Promise<monaco.languages.ProviderResult<monaco.languages.InlineCompletions>> {
+): Promise<monaco.languages.InlineCompletions> {
     const textBeforeCursor = model.getValueInRange({
         startLineNumber: 1,
         startColumn: 1,
@@ -38,8 +36,10 @@ export async function provideInlineCompletions(
                     position.lineNumber,
                     position.column
                 ),
+                completeBracketPairs: true,
             },
         ],
+        enableForwardStability: true,
     };
     return inlineCompletions;
 }
