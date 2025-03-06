@@ -2,12 +2,7 @@ import { type FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { registerCompletion } from "../monaco/register";
 
-if (import.meta.env.DEV) {
-    await import("monaco-editor");
-} else {
-    // import "./monaco-features";
-    await import("./monaco-features");
-}
+import "./monaco-features";
 import "./monaco-languages";
 import "./monaco-workers";
 
@@ -42,9 +37,9 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
 
         window.editor = editor;
         editorRef.current = editor;
-        const instance = registerCompletion(editor, { loadingCursor: true });
+        const completion = registerCompletion(editor, { loadingCursor: true });
 
-        instance.addEventListener("change", (event) => {
+        completion.addEventListener("change", (event) => {
             setState(event.detail);
             onState?.(event.detail);
         });
@@ -57,6 +52,7 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
         });
 
         return () => {
+            completion.dispose();
             model.dispose();
             editor.dispose();
         };
