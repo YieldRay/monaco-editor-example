@@ -57,7 +57,7 @@ export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunct
     if (!cursor) return noop;
 
     const classname = "cursor-my-monaco-loading";
-    cursor.classList.add(classname);
+    cursor.classList.add(classname); // we should use class, as monaco will replace the style attribute
     const sheet = adoptStyleSheet(/*css*/ `.${CSS.escape(classname)} {
             position: relative !important;
             visibility: visible !important;
@@ -70,6 +70,7 @@ export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunct
     cursor.innerHTML = svgSpinners270RingWithBg;
 
     return () => {
+        cursor.classList.remove(classname);
         cursor.innerHTML = "";
         sheet.replaceSync("");
     };

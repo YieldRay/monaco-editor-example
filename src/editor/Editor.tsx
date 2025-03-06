@@ -1,4 +1,4 @@
-import { FC, useRef, useEffect, useState } from "react";
+import { type FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { registerCompletion } from "../monaco/register";
 

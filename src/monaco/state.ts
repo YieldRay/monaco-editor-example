@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { RegisterCompletionOptions } from "./register";
+import type { RegisterCompletionOptions } from "./register";
 import { provideInlineCompletions } from "./completion";
 import { setCursorToLoading } from "./addition";
 
