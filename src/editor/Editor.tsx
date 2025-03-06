@@ -26,7 +26,7 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
             value,
             "typescript",
             // Each model is identified by a URI.
-            monaco.Uri.parse("file:///main.tsx")
+            monaco.Uri.parse("file:///tmp/main.ts")
         );
 
         // An editor is a user facing view of the model.

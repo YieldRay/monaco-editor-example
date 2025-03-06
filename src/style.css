@@ -5,9 +5,9 @@ body {
 }
 
 html,
-body {
-    height: 100vh;
-    max-height: 100vh;
+body,
+#root {
+    height: 100%;
 }
 
 .scrollbar {

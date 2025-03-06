@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import { adoptStyleSheet } from "./css";
 
 /**
  * editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space, () => {});
@@ -27,29 +28,6 @@ export function addAction({
 
 export function getCursorDomNode(editor: monaco.editor.ICodeEditor) {
     return editor.getDomNode()?.querySelector(".cursors-layer .cursor") as HTMLElement | undefined;
-}
-
-export function setStyle(
-    el: { style: CSSStyleDeclaration },
-    style: Partial<CSSStyleDeclaration>
-): VoidFunction {
-    const saved: Partial<CSSStyleDeclaration> = {};
-    for (const [k, v] of Object.entries(style)) {
-        Reflect.set(saved, k, Reflect.get(el, k));
-        Reflect.set(el, k, v);
-    }
-    return () => {
-        for (const [k, v] of Object.entries(saved)) {
-            Reflect.set(el, k, v);
-        }
-    };
-}
-
-export function adoptStyleSheet(css: string) {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(css);
-    document.adoptedStyleSheets.push(sheet);
-    return sheet;
 }
 
 export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunction {
