@@ -1,9 +1,9 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import type { RegisterCompletionOptions } from "./register";
-import { provideInlineCompletions } from "./completion";
+import type { ProvideInlineCompletions, RegisterCompletionOptions } from "./register";
 import { setCursorToLoading } from "./addition";
 
 const EDITOR_KEY = Symbol("EDITOR_KEY");
+const CANCELED = Symbol("CANCELED");
 
 export type State =
     | "completion-delay"
@@ -11,15 +11,6 @@ export type State =
     | "completion-ready"
     | "completion-error"
     | "idle";
-
-class Cancelled<T = never> extends Error {
-    name = "Cancelled";
-    reason?: T;
-    constructor(reason?: T) {
-        super("Cancelled");
-        this.reason = reason;
-    }
-}
 
 /**
  * @internal
@@ -31,14 +22,16 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     readonly editor: monaco.editor.IStandaloneCodeEditor;
     readonly delay: number;
     readonly timeout: number;
+    provideInlineCompletions: ProvideInlineCompletions;
     private constructor(
         editor: monaco.editor.IStandaloneCodeEditor,
-        options?: RegisterCompletionOptions
+        options: RegisterCompletionOptions
     ) {
         super();
         this.editor = editor;
         this.delay = options?.delay || 400;
         this.timeout = options?.timeout || 10_000;
+        this.provideInlineCompletions = options.provideInlineCompletions;
 
         if (options?.loadingCursor) {
             this.addEventListener("change", (e) => {
@@ -62,7 +55,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
      */
     public static attachEditor(
         editor: monaco.editor.IStandaloneCodeEditor,
-        options?: RegisterCompletionOptions
+        options: RegisterCompletionOptions
     ) {
         if (Reflect.has(editor, EDITOR_KEY)) {
             return Reflect.get(editor, EDITOR_KEY) as EditorRegisteredState;
@@ -83,8 +76,8 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         }
     }
 
-    private lastInlineCompletionAC?: AbortController;
     private lastInlineCompletionTO?: ReturnType<typeof setTimeout>;
+    private lastInlineCompletionCTS?: monaco.CancellationTokenSource;
     private cleanLastDelay?: VoidFunction;
     private inlineCompletionsProvider: monaco.languages.InlineCompletionsProvider = {
         provideInlineCompletions: async (model, position, context, token) => {
@@ -94,17 +87,17 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             console.debug("provideInlineCompletions", { model, position, context, token });
 
             // cancel the last request
-            this.lastInlineCompletionAC?.abort(new Cancelled("abort by new request"));
+            this.lastInlineCompletionCTS?.dispose(true); // cancel and dispose
             clearTimeout(this.lastInlineCompletionTO);
             this.cleanLastDelay?.();
 
             // prepare a new request
-            const ac = new AbortController();
-            this.lastInlineCompletionAC = ac;
-            const aborted = new Promise<never>((_, reject) =>
-                ac.signal.addEventListener("abort", reject)
-            );
-            token.onCancellationRequested(() => ac.abort(new Cancelled("onCancellationRequested")));
+            const compositeCTS = new monaco.CancellationTokenSource(token);
+            this.lastInlineCompletionCTS = compositeCTS;
+
+            const canceled = new Promise<never>((_, reject) => {
+                compositeCTS.token.onCancellationRequested(() => reject(CANCELED));
+            });
 
             // waiting for delay
             this.state = "completion-delay";
@@ -115,8 +108,13 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
                 reject(); // must resolve/reject the promise to prevent memory leak
             };
             try {
-                await Promise.race([aborted, delayPromise]);
-            } catch {
+                await Promise.race([canceled /** this one never fulfilled */, delayPromise]);
+            } catch (reason) {
+                if (reason === CANCELED) {
+                    this.state = "idle";
+                    return null;
+                }
+                // canceled
                 return null;
             }
 
@@ -124,33 +122,27 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             this.state = "completion-loading";
 
             // set the request timeout
-            this.lastInlineCompletionTO = setTimeout(
-                () => ac.abort(new Cancelled("request timeout")),
-                this.timeout
-            );
+            this.lastInlineCompletionTO = setTimeout(() => {
+                compositeCTS.dispose(true); // cancel and dispose
+            }, this.timeout);
 
             try {
                 const inlineCompletions = await Promise.race([
-                    aborted,
-                    this.provideInlineCompletions(
-                        model,
-                        position,
-                        context,
-                        token,
-                        ac.signal // pass the signal, this is useful for aborting the `fetch`
-                    ),
+                    canceled /** this one never fulfilled */,
+                    this.provideInlineCompletions(model, position, context, compositeCTS.token),
                 ]);
                 // request is completed, handleItemDidShow will be called
                 this.state = "completion-ready";
                 return inlineCompletions;
             } catch (reason) {
-                if (reason instanceof Cancelled) {
+                if (reason === CANCELED) {
+                    this.state = "idle";
                     return null;
                 }
-
+                // this.provideInlineCompletions is rejected
                 console.debug("provideInlineCompletions error", reason);
                 this.dispatchEvent(new CustomEvent("completion-error", { detail: reason }));
-                if (ac === this.lastInlineCompletionAC) {
+                if (compositeCTS === this.lastInlineCompletionCTS) {
                     // make sure there is no new completion
                     this.state = "completion-error";
                 }
@@ -195,16 +187,6 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     private set state(s: typeof this._state) {
         this._state = s;
         this.dispatchEvent(new CustomEvent("change", { detail: s }));
-    }
-
-    private provideInlineCompletions(
-        model: monaco.editor.ITextModel,
-        position: monaco.Position,
-        context: monaco.languages.InlineCompletionContext,
-        token: monaco.CancellationToken,
-        signal: AbortSignal
-    ): monaco.languages.ProviderResult<monaco.languages.InlineCompletions> {
-        return provideInlineCompletions(model, position, context, token, signal);
     }
 }
 

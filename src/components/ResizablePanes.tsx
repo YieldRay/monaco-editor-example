@@ -1,5 +1,4 @@
 import { useCallback, useRef } from "react";
-import { mergeStyles } from "../monaco/css";
 
 function Divider({
     size,
@@ -145,4 +144,17 @@ export function ResizablePanes({
             {...props}
         />
     );
+}
+
+/**
+ * merge react styles
+ */
+function mergeStyles(...styles: Array<React.CSSProperties | boolean | void>): React.CSSProperties {
+    const s: React.CSSProperties = {};
+    for (const style of styles) {
+        if (typeof style === "object") {
+            Object.assign(s, style);
+        }
+    }
+    return s;
 }

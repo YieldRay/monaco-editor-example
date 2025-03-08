@@ -2,6 +2,13 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState, type State } from "./state";
 import { triggerInlineSuggest } from "./addition";
 
+export type ProvideInlineCompletions = (
+    model: monaco.editor.ITextModel,
+    position: monaco.Position,
+    context: monaco.languages.InlineCompletionContext,
+    token: monaco.CancellationToken
+) => monaco.languages.ProviderResult<monaco.languages.InlineCompletions>;
+
 export interface RegisterCompletionOptions {
     language?: monaco.languages.LanguageSelector;
     /** @default 400 */
@@ -21,17 +28,12 @@ export interface RegisterCompletionOptions {
      *
      * Note that debouncing and many features are already implemented,
      * so you don't need reimplement it again */
-    provideInlineCompletions?: (
-        model: monaco.editor.ITextModel,
-        position: monaco.Position,
-        context: monaco.languages.InlineCompletionContext,
-        token: monaco.CancellationToken
-    ) => monaco.languages.ProviderResult<monaco.languages.InlineCompletions>;
+    provideInlineCompletions: ProvideInlineCompletions;
 }
 
 export function registerCompletion(
     editor: monaco.editor.IStandaloneCodeEditor,
-    options?: RegisterCompletionOptions
+    options: RegisterCompletionOptions
 ) {
     const state = EditorRegisteredState.attachEditor(editor, options);
     return {

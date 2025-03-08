@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { adoptStyleSheet } from "./css";
+import { addStyle } from "../css";
 
 /**
  * editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space, () => {});
@@ -36,7 +36,7 @@ export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunct
 
     const classname = "cursor-my-monaco-loading";
     cursor.classList.add(classname); // we should use class, as monaco will replace the style attribute
-    const sheet = adoptStyleSheet(/*css*/ `.${CSS.escape(classname)} {
+    const removeStyle = addStyle(/*css*/ `.${CSS.escape(classname)} {
             position: relative !important;
             visibility: visible !important;
             overflow: visible !important;
@@ -50,7 +50,7 @@ export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunct
     return () => {
         cursor.classList.remove(classname);
         cursor.innerHTML = "";
-        sheet.replaceSync("");
+        removeStyle();
     };
 }
 

@@ -1,10 +1,11 @@
 import { type FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { registerCompletion } from "../monaco/register";
+import { registerCompletion } from "../monaco/code-completion";
 
 import "./monaco-features";
 import "./monaco-languages";
 import "./monaco-workers";
+import { chatCompletionsDemo } from "../monaco/code-completion/service";
 
 interface Props {
     value?: string;
@@ -37,7 +38,10 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
 
         window.editor = editor;
         editorRef.current = editor;
-        const completion = registerCompletion(editor, { loadingCursor: true });
+        const completion = registerCompletion(editor, {
+            provideInlineCompletions: chatCompletionsDemo(),
+            loadingCursor: true,
+        });
 
         completion.addEventListener("change", (event) => {
             setState(event.detail);

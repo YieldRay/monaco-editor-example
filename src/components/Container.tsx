@@ -1,11 +1,26 @@
 import { useState } from "react";
 import { useKey } from "react-use";
 import { Editor } from "../editor/Editor";
-import { runCode } from "../utils/runcode";
-import { ICON_HIDE, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "../utils/icon";
+import { ICON_HIDE, ICON_RUN, ICON_SHOW, ICON_FORMAT } from "./icons";
 import { ResizablePanes } from "./ResizablePanes";
 
 const INIT_CODE = `console.log(Deno.version)`;
+
+/**
+ * @example
+ * const result: string = await runCode(`console.log('Hello, World!')`);
+ * console.assert(result === `Hello, World!\n\n[Execution complete with exit code 0]`);
+ */
+async function runCode(code: string) {
+    /**
+     * This API is for demo ONLY, DO NOT USE in production.
+     */
+    const res = await fetch("https://yieldray-mycompiler.web.val.run/", {
+        method: "POST",
+        body: code,
+    });
+    return await res.text();
+}
 
 export function Container() {
     const [value, setValue] = useState(INIT_CODE);

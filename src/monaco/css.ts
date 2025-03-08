@@ -14,21 +14,11 @@ export function setStyle(
     };
 }
 
-export function adoptStyleSheet(css: string) {
+export function addStyle(css: string) {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(css);
     document.adoptedStyleSheets.push(sheet);
-    return sheet;
+    return () =>
+        (document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet));
 }
 
-export function mergeStyles(
-    ...styles: Array<React.CSSProperties | boolean | void>
-): React.CSSProperties {
-    const s: React.CSSProperties = {};
-    for (const style of styles) {
-        if (typeof style === "object") {
-            Object.assign(s, style);
-        }
-    }
-    return s;
-}
