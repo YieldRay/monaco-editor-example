@@ -5,7 +5,7 @@ import { registerCompletion } from "../monaco/code-completion";
 import "./monaco-features";
 import "./monaco-languages";
 import "./monaco-workers";
-import { chatCompletionsDemo } from "../monaco/code-completion/service";
+import { chatCompletionsDemo } from "../monaco/code-completion/completion";
 
 interface Props {
     value?: string;

@@ -112,7 +112,6 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             } catch (reason) {
                 if (reason === CANCELED) {
                     this.state = "idle";
-                    return null;
                 }
                 // canceled
                 return null;
