@@ -41,6 +41,7 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
         const completion = registerCompletion(editor, {
             provideInlineCompletions: chatCompletionsDemo(),
             loadingCursor: true,
+            timeout: 60_0000,
         });
 
         completion.addEventListener("change", (event) => {
