@@ -7,24 +7,48 @@ const svgSend = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><!-
 const innerHTML = /*html*/ `\ 
 <header class="monaco-inline-chat__header">
     <div class="monaco-inline-chat__header__prompt"></div>
+    <div class="monaco-inline-chat__header__error"></div>
 </header>
 
 <div class="monaco-inline-chat__body">
     <div contenteditable="plaintext-only" class="monaco-inline-chat__body__input monaco-inline-chat-scrollbar" placeholder="Ask Copilot..."></div>
-    <button class="monaco-inline-chat__body__button" title="Send And Dispatch (Enter)">${svgSend}</button>
+    <button disabled class="monaco-inline-chat__body__button" title="Send And Dispatch (Enter)">${svgSend}</button>
 </div>
 
 <footer class="monaco-inline-chat__footer"></footer>
 `;
 
 const css = /* css */ `\ 
+.monaco-inline-chat {
+    padding-left: 64px;
+    padding-right: 80px;
+    display: flex;
+    flex-direction: column;
+}
+.monaco-inline-chat * {
+    overscroll-behavior: none;
+}
 .monaco-inline-chat__header {
     display: grid;
+    padding: 4px;
+}
+.monaco-inline-chat__header__prompt:not(:empty)::after {
+      display: inline-block;
+      animation: dotty steps(1,end) 1s infinite;
+      content: '';
+}
+@keyframes dotty {
+    0%,100% { content: '\\2008\\2008\\2008'; }
+    25%     { content: '.\\2008\\2008'; }
+    50%     { content: '..\\2008'; }
+    75%     { content: '...'; }
+}
+.monaco-inline-chat__header__error {
+    color: red;
 }
 .monaco-inline-chat__body {
     display: flex;
     gap: 8px;
-    padding: 8px;
     min-height: 24px;
 }
 .monaco-inline-chat__body__input {
@@ -52,6 +76,10 @@ const css = /* css */ `\
     cursor: pointer;
     color: #888;
 }
+.monaco-inline-chat__body__button[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
 .monaco-inline-chat__body__button svg {
     width: 24px;
     height: 24px;
@@ -65,7 +93,7 @@ const css = /* css */ `\
         height: 8px;
         transition: all 0.3s;
     }
-    /* The track of scrooll bar */
+    /* The track of scroll bar */
     &::-webkit-scrollbar-track {
         background: transparent;
     }
@@ -87,36 +115,55 @@ const css = /* css */ `\
 }
 `;
 
-export function createInlineChat({ onSend }: { onSend: (text: string) => Promise<void> }) {
-    const dom = new DocumentFragment();
-    const container = document.createElement("div");
-    container.className = "monaco-inline-chat";
-    container.innerHTML = innerHTML;
-    dom.append(container);
+class AbortError extends Error {
+    constructor() {
+        super("aborted");
+        this.name = "AbortError";
+    }
+}
+
+export function createInlineChat({
+    onSend,
+}: {
+    onSend: (text: string, signal: AbortSignal) => Promise<void>;
+}) {
+    const domNode = document.createElement("div");
+    domNode.className = "monaco-inline-chat";
+    domNode.innerHTML = innerHTML;
+
     const removeStyle = addStyle(css);
 
-    const prompt = dom.querySelector(".monaco-inline-chat__header__prompt") as HTMLDivElement;
-    const button = dom.querySelector(".monaco-inline-chat__body__button") as HTMLButtonElement;
-    const input = dom.querySelector(".monaco-inline-chat__body__input") as HTMLDivElement;
-    const close = dom.querySelector(".monaco-inline-chat__header__close") as HTMLDivElement;
+    const prompt = domNode.querySelector(".monaco-inline-chat__header__prompt") as HTMLDivElement;
+    const error = domNode.querySelector(".monaco-inline-chat__header__error") as HTMLDivElement;
+    const button = domNode.querySelector(".monaco-inline-chat__body__button") as HTMLButtonElement;
+    const input = domNode.querySelector(".monaco-inline-chat__body__input") as HTMLDivElement;
 
     let sendAbortController: AbortController | undefined;
     const send = async () => {
         // show the prompt
-        prompt.textContent = input.textContent;
-        input.textContent = "";
+        const text = input.textContent;
+        prompt.textContent = text;
+        input.textContent = null;
+        error.textContent = null;
 
         button.innerHTML = svgStop;
         button.dataset.disabled = "true";
         sendAbortController = new AbortController();
         const abortPromise = new Promise((_, reject) => {
-            sendAbortController?.signal.addEventListener("abort", () =>
-                reject(new Error("aborted"))
-            );
+            sendAbortController?.signal.addEventListener("abort", () => reject(new AbortError()));
         });
         try {
-            await Promise.race([onSend(input.textContent || ""), abortPromise]);
-        } catch {
+            await Promise.race([onSend(text || "", sendAbortController.signal), abortPromise]);
+            prompt.textContent = null;
+        } catch (e) {
+            if (!(e instanceof AbortError)) {
+                if (e) {
+                    console.error(e);
+                    error.textContent = String(e);
+                } else error.textContent = "Unknown error";
+            }
+            input.textContent = prompt.textContent;
+            prompt.textContent = null;
             stop();
         } finally {
             button.innerHTML = svgSend;
@@ -139,6 +186,10 @@ export function createInlineChat({ onSend }: { onSend: (text: string) => Promise
         }
     });
 
+    input.addEventListener("input", () => {
+        button.disabled = !input.textContent?.trim();
+    });
+
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -146,20 +197,17 @@ export function createInlineChat({ onSend }: { onSend: (text: string) => Promise
         }
     });
 
+    const dispose = () => {
+        removeStyle();
+        stop();
+        domNode.remove();
+    };
+
     return {
-        dom,
+        /** contains only single HTMLElement */
+        domNode,
         button,
         input,
-        close,
-        removeStyle,
+        dispose,
     };
 }
-
-/* const { dom } = createInlineChat({
-    onSend: async (text) => {
-        console.log("onSend", text);
-        await new Promise((r) => setTimeout(r, 1000));
-    },
-});
-document.body.appendChild(dom);
- */

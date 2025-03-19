@@ -1,1 +1,2 @@
-export * from "./dom";
+export * from "./register";
+export * from "./zone-widget";

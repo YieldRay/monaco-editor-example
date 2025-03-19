@@ -1,11 +1,13 @@
 import { type FC, useRef, useEffect, useState } from "react";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { registerCompletion } from "../monaco/code-completion";
 
 import "./monaco-features";
 import "./monaco-languages";
 import "./monaco-workers";
-import { chatCompletionsDemo } from "../monaco/code-completion/completion";
+import { registerCompletion } from "../monaco/code-completion";
+import { chatCompletionsDemo } from "../monaco/code-completion/demo";
+import { registerInlineChat } from "../monaco/inline-chat/";
+import { inlineChatDemo } from "../monaco/inline-chat/demo";
 
 interface Props {
     value?: string;
@@ -35,20 +37,22 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
             model,
             automaticLayout: true,
         });
+        editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
 
         window.editor = editor;
         editorRef.current = editor;
+
         const completion = registerCompletion(editor, {
             provideInlineCompletions: chatCompletionsDemo(),
             loadingCursor: true,
             timeout: 60_0000,
         });
-
         completion.addEventListener("change", (event) => {
             setState(event.detail);
             onState?.(event.detail);
         });
-        editor.onDidChangeModelContent(() => onChange?.(editor.getValue()));
+
+        const inlineChat = registerInlineChat(editor, inlineChatDemo);
 
         // Turn off the default typescript diagnostics
         monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
@@ -58,6 +62,7 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
 
         return () => {
             completion.dispose();
+            inlineChat.dispose();
             model.dispose();
             editor.dispose();
         };
