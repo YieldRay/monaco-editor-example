@@ -24,11 +24,11 @@ export function chatCompletionsDemo(): ProvideInlineCompletions {
 
         return fallbacks(
             async () => {
-                const json = await nahcrof(params, signal);
+                const json = await openrouter(params, signal);
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             },
             async () => {
-                const json = await openrouter(params, signal);
+                const json = await nahcrof(params, signal);
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             },
             async () => {
