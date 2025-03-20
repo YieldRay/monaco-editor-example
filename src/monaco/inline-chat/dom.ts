@@ -18,6 +18,7 @@ const innerHTML = /*html*/ `\
 <footer class="monaco-inline-chat__footer"></footer>
 `;
 
+// TODO: use css variables
 const css = /* css */ `\ 
 .monaco-inline-chat {
     padding-left: 64px;
@@ -35,10 +36,10 @@ const css = /* css */ `\
 }
 .monaco-inline-chat__header__prompt:not(:empty)::after {
       display: inline-block;
-      animation: dotty steps(1,end) 1s infinite;
+      animation: monaco-inline-chat__dotty steps(1,end) 1s infinite;
       content: '';
 }
-@keyframes dotty {
+@keyframes monaco-inline-chat__dotty {
     0%,100% { content: '\\2008\\2008\\2008'; }
     25%     { content: '.\\2008\\2008'; }
     50%     { content: '..\\2008'; }
@@ -59,9 +60,9 @@ const css = /* css */ `\
     border-radius: 4px;
     resize: none;
     box-sizing: content-box;
-    max-height: 3em;
-    font-size: 14px;
     line-height: 1em;
+    max-height: 4em; /* max 4 lines */
+    font-size: 14px;
     overflow-y: auto;
 }
 .monaco-inline-chat__body__input:focus {

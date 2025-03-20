@@ -12,6 +12,10 @@ export type State =
     | "completion-error"
     | "idle";
 
+// TODO: fire more events, like onCompletionShown, onCompletionAccepted, onCompletionRejected, etc.
+
+// TODO: `triggerInlineSuggest` should trigger the completion even if the cursor is not at the end of the line
+
 /**
  * @internal
  * One editor can only have one state.
