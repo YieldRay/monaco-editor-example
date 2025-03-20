@@ -43,11 +43,11 @@ export class ZoneWidget implements monaco.IDisposable {
                 overlayDom.style.height = height + "px";
             },
         };
-        const layoutZone = () =>
-            editor.changeViewZones(function (changeAccessor) {
+        const layoutZone: VoidFunction = () => {
+            editor.changeViewZones((changeAccessor) => {
                 changeAccessor.layoutZone(zone.id!);
             });
-
+        };
         const ro = new ResizeObserver((elements) => {
             const element = elements[0];
             if (!element) return;

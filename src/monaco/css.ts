@@ -14,11 +14,11 @@ export function setStyle(
     };
 }
 
-export function addStyle(css: string) {
+export function addStyle(css: string): VoidFunction {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(css);
     document.adoptedStyleSheets.push(sheet);
-    return () =>
-        (document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet));
+    return () => {
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
+    };
 }
-

@@ -174,7 +174,7 @@ export function createInlineChat({
         }
     };
 
-    const stop = () => {
+    const stop: VoidFunction = () => {
         sendAbortController?.abort();
         sendAbortController = undefined;
         button.innerHTML = svgSend;

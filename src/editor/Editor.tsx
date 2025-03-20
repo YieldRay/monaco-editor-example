@@ -4,6 +4,7 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import "./monaco-features";
 import "./monaco-languages";
 import "./monaco-workers";
+
 import { registerCompletion } from "../monaco/code-completion";
 import { chatCompletionsDemo } from "../monaco/code-completion/demo";
 import { registerInlineChat } from "../monaco/inline-chat/";
