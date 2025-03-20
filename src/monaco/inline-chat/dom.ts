@@ -63,6 +63,7 @@ const css = /* css */ `\
     line-height: 1em;
     max-height: 4em; /* max 4 lines */
     font-size: 14px;
+    overflow-x: auto;
     overflow-y: auto;
 }
 .monaco-inline-chat__body__input:focus {
@@ -196,7 +197,26 @@ export function createInlineChat({
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             send();
+            return;
         }
+
+        // Ctrl-A, not provided for contenteditable by default
+        if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            const range = document.createRange();
+            range.selectNodeContents(input);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            return;
+        }
+    });
+
+    // must manually support scroll
+    input.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        input.scrollTop += e.deltaY;
+        input.scrollLeft += e.deltaX;
     });
 
     const dispose = () => {
