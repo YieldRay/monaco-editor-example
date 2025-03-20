@@ -1,6 +1,11 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import type { ProvideInlineCompletions } from "./register";
 
+/**
+ * facade for ProvideInlineCompletions
+ *
+ * @param [force=false] force the completion to show, even if there is has other completions
+ */
 export function chatCompletions(
     facade: (
         textBeforeCursor: string,

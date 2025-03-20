@@ -2,20 +2,39 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { ZoneWidget } from "./zone-widget";
 import { createInlineChat } from "./dom";
 
+export interface OnInlineChatSend {
+    (
+        text: string,
+        editor: monaco.editor.ICodeEditor,
+        afterLineNumber: number,
+        signal: AbortSignal
+    ): Promise<void>;
+}
+
 /**
  * @param [afterLineNumber=0] The line that triggers the inline chat, content will be inserted after this line.
  */
 export function registerInlineChat(
     editor: monaco.editor.ICodeEditor,
-    onSend: (
-        text: string,
-        editor: monaco.editor.ICodeEditor,
-        afterLineNumber: number,
-        signal: AbortSignal
-    ) => Promise<void>,
-    afterLineNumber = 0,
-    keybindings: number[] = [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI]
+    options: {
+        onSend: OnInlineChatSend;
+        /**
+         * @default [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI]
+         */
+        keybindings?: number[];
+        afterLineNumber?: number;
+    } & Partial<Omit<monaco.editor.IActionDescriptor, "run">>
 ) {
+    const {
+        onSend,
+        afterLineNumber = 0,
+        id = "monaco-inline-chat",
+        label = "Editor inline chat",
+        contextMenuGroupId = "navigation",
+        keybindings = [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+        ...descriptor
+    } = options;
+
     const { domNode, input, dispose } = createInlineChat({
         onSend: (text, signal) => {
             return onSend(text, editor, zw.afterLineNumber, signal);
@@ -26,9 +45,11 @@ export function registerInlineChat(
     zw.hide();
 
     const action = monaco.editor.addEditorAction({
-        id: "monaco-inline-chat",
-        label: "Editor inline chat",
+        id,
+        label,
         keybindings,
+        contextMenuGroupId,
+        ...descriptor,
         run: () => {
             const currentLineNumber = editor.getPosition()?.lineNumber ?? 0;
             zw.afterLineNumber = currentLineNumber;

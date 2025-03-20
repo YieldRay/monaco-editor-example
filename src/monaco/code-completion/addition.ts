@@ -8,28 +8,39 @@ export function triggerInlineSuggest(editor: monaco.editor.ICodeEditor) {
     return editor.trigger("keyboard", "editor.action.inlineSuggest.trigger", {});
 }
 
-export function addAction({
+/**
+ * Add `triggerInlineSuggest` as an editor action to the editor
+ */
+export function addEditorAction({
     id = "triggerInlineSuggest",
     label = "Complete Code",
     contextMenuGroupId = "navigation",
+    keybindings = [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space],
     ...descriptor
 }: Partial<monaco.editor.IActionDescriptor> = {}) {
-    monaco.editor.addEditorAction({
+    return monaco.editor.addEditorAction({
         id,
         label,
         contextMenuGroupId,
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space],
+        keybindings,
+        ...descriptor,
         run: (editor) => {
             triggerInlineSuggest(editor);
         },
-        ...descriptor,
     });
 }
 
+/**
+ * Get the cursor DOM node
+ */
 export function getCursorDomNode(editor: monaco.editor.ICodeEditor) {
     return editor.getDomNode()?.querySelector(".cursors-layer .cursor") as HTMLElement | undefined;
 }
 
+/**
+ * Set the cursor to a loading spinner
+ * @returns a function to remove the loading spinner
+ */
 export function setCursorToLoading(editor: monaco.editor.ICodeEditor): VoidFunction {
     const cursor = getCursorDomNode(editor);
     if (!cursor) return noop;

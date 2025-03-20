@@ -22,7 +22,7 @@ import "monaco-editor/esm/vs/editor/browser/coreCommands";
 // clipboard
 // import "monaco-editor/esm/vs/editor/contrib/clipboard/browser/clipboard";
 // codeAction
-// import "monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionContributions";
+import "monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionContributions";
 // codeEditor
 // import "monaco-editor/esm/vs/editor/browser/widget/codeEditor/codeEditorWidget";
 // codelens
@@ -33,7 +33,7 @@ import "monaco-editor/esm/vs/editor/browser/coreCommands";
 // comment
 import "monaco-editor/esm/vs/editor/contrib/comment/browser/comment";
 // contextmenu
-// import "monaco-editor/esm/vs/editor/contrib/contextmenu/browser/contextmenu";
+import "monaco-editor/esm/vs/editor/contrib/contextmenu/browser/contextmenu";
 // cursorUndo
 // import "monaco-editor/esm/vs/editor/contrib/cursorUndo/browser/cursorUndo";
 // diffEditor

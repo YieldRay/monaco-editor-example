@@ -21,14 +21,15 @@ const innerHTML = /*html*/ `\
 const css = /* css */ `\ 
 .monaco-inline-chat {
     padding-left: 64px;
-    padding-right: 80px;
+    padding-right: 84px;
     display: flex;
     flex-direction: column;
+    border: 1px solid #888;
 }
 .monaco-inline-chat * {
     overscroll-behavior: none;
 }
-.monaco-inline-chat__header {
+.monaco-inline-chat__header, .monaco-inline-chat__footer {
     display: grid;
     padding: 4px;
 }
@@ -53,7 +54,7 @@ const css = /* css */ `\
 }
 .monaco-inline-chat__body__input {
     flex: 1;
-    padding: 8px;
+    padding: 4px;
     border: 1px solid #ddd;
     border-radius: 4px;
     resize: none;

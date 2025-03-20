@@ -44,15 +44,18 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
 
         const completion = registerCompletion(editor, {
             provideInlineCompletions: chatCompletionsDemo(),
-            loadingCursor: true,
             timeout: 60_0000,
+            loadingCursor: true,
+            editorAction: true,
         });
         completion.addEventListener("change", (event) => {
             setState(event.detail);
             onState?.(event.detail);
         });
 
-        const inlineChat = registerInlineChat(editor, inlineChatDemo);
+        const inlineChat = registerInlineChat(editor, {
+            onSend: inlineChatDemo,
+        });
 
         // Turn off the default typescript diagnostics
         monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({

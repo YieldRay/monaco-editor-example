@@ -24,7 +24,7 @@ export function chatCompletionsDemo(): ProvideInlineCompletions {
 
         return fallbacks(
             async () => {
-                const json = await pollinations(params, signal);
+                const json = await nahcrof(params, signal);
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             },
             async () => {
@@ -32,7 +32,7 @@ export function chatCompletionsDemo(): ProvideInlineCompletions {
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             },
             async () => {
-                const json = await nahcrof(params, signal);
+                const json = await pollinations(params, signal);
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             }
         );

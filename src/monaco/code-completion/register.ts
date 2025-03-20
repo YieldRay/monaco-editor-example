@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState, type State } from "./state";
-import { triggerInlineSuggest } from "./addition";
+import { triggerInlineSuggest, type addEditorAction } from "./addition";
 
 export type ProvideInlineCompletions = (
     model: monaco.editor.ITextModel,
@@ -11,11 +11,19 @@ export type ProvideInlineCompletions = (
 
 export interface RegisterCompletionOptions {
     language?: monaco.languages.LanguageSelector;
-    /** @default 400 */
+    /**
+     * After the user stopped typing, how long should we wait before we start fetching the completion
+     * @default 400
+     */
     delay?: number;
-    /** @default 10_000 */
+    /**
+     * The timeout for the completion to be ready
+     * @default 10_000
+     */
     timeout?: number;
-    /** replace the cursor with a spinning ring when loading, so you don't need implement it in your own */
+    /**
+     * Replace the cursor with a spinning ring when loading, so you don't need implement it in your own
+     */
     loadingCursor?: boolean;
     /**
      * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions
@@ -29,8 +37,25 @@ export interface RegisterCompletionOptions {
      * Note that debouncing and many features are already implemented,
      * so you don't need reimplement it again */
     provideInlineCompletions: ProvideInlineCompletions;
+    /**
+     * If provided, this action will be added to the editor
+     */
+    editorAction?: boolean | Parameters<typeof addEditorAction>[0];
+    /**
+     * Check the cursor position before trigger the completion,
+     * by default it will only trigger the completion when the cursor is at the end of the line
+     * @default "end"
+     */
+    triggerPosition?: "anywhere" | "end";
 }
 
+/**
+ * Register inline completion for the editor
+ *
+ * @param options the options for the completion, this is NOT changeable after the editor is registered,
+ * so if you want to change the options, you need to dispose the current completion and register a new one
+ * @returns a disposable object to dispose the completion, you can also listen to the completion event
+ */
 export function registerCompletion(
     editor: monaco.editor.IStandaloneCodeEditor,
     options: RegisterCompletionOptions
@@ -38,6 +63,9 @@ export function registerCompletion(
     const state = EditorRegisteredState.attachEditor(editor, options);
     return {
         dispose: state.dispose.bind(state),
+        /**
+         * Trigger inline suggest manually
+         */
         trigger: () => triggerInlineSuggest(editor),
         addEventListener: state.addEventListener.bind(state) as AddEventListener,
         removeEventListener: state.removeEventListener.bind(state),

@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import type { ProvideInlineCompletions, RegisterCompletionOptions } from "./register";
-import { setCursorToLoading } from "./addition";
+import { setCursorToLoading, addEditorAction } from "./addition";
 
 const EDITOR_KEY = Symbol("EDITOR_KEY");
 const CANCELED = Symbol("CANCELED");
@@ -16,24 +16,35 @@ export type State =
  * @internal
  * One editor can only have one state.
  * Note that the completion is registered for the entire app,
- * we need to make sure completion appears only for the registered one
+ * we need to make sure completion appears only for the registered editor.
+ *
+ * Also, MAKE SURE everything clean up correctly when the editor is disposed.
  */
 export class EditorRegisteredState extends EventTarget implements monaco.IDisposable {
     readonly editor: monaco.editor.IStandaloneCodeEditor;
     readonly delay: number;
     readonly timeout: number;
-    provideInlineCompletions: ProvideInlineCompletions;
+    readonly triggerPosition: RegisterCompletionOptions["triggerPosition"];
+    private provideInlineCompletions: ProvideInlineCompletions;
+    private editorAction?: monaco.IDisposable;
     private constructor(
         editor: monaco.editor.IStandaloneCodeEditor,
         options: RegisterCompletionOptions
     ) {
         super();
         this.editor = editor;
-        this.delay = options?.delay || 400;
-        this.timeout = options?.timeout || 10_000;
+        this.delay = options.delay || 400;
+        this.timeout = options.timeout || 10_000;
+        this.triggerPosition = options.triggerPosition || "end";
         this.provideInlineCompletions = options.provideInlineCompletions;
 
-        if (options?.loadingCursor) {
+        if (options.editorAction) {
+            this.editorAction = addEditorAction(
+                typeof options.editorAction === "object" ? options.editorAction : {}
+            );
+        }
+
+        if (options.loadingCursor) {
             this.addEventListener("change", (e) => {
                 const state = (e as CustomEvent).detail as State;
                 if (state === "completion-loading") {
@@ -83,6 +94,15 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         provideInlineCompletions: async (model, position, context, token) => {
             // we only provide completions for the registered editor (model)
             if (model !== this.editor.getModel()) return null;
+
+            if (this.triggerPosition === "end") {
+                // only trigger the completion when the cursor is at the end of the line
+                // after the cursor there can be only whitespace or nothing
+                const line = model.getLineContent(position.lineNumber);
+                const afterCursor = line.slice(position.column - 1);
+                if (!/^\s*$/.test(afterCursor)) return null;
+            }
+
             // control flow goes here, means that user has typed a character
             console.debug("provideInlineCompletions", { model, position, context, token });
 
@@ -179,6 +199,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.registerInlineCompletionsProviderResult?.dispose();
         clearTimeout(this.lastInlineCompletionTO);
         this.cleanLastDelay?.();
+        this.editorAction?.dispose();
     }
 
     private _state: State = "idle";
