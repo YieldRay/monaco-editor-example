@@ -1,5 +1,9 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
+/**
+ * monaco editor does not provide zone widget. we want such a zone widget,
+ * that is both interactable like OverlayWidget and can span multiple lines like ViewZone.
+ */
 export class ZoneWidget implements monaco.IDisposable {
     editor: monaco.editor.ICodeEditor;
     constructor(editor: monaco.editor.ICodeEditor, domNode: HTMLElement, afterLineNumber = 0) {
@@ -12,10 +16,11 @@ export class ZoneWidget implements monaco.IDisposable {
         overlayDom.id = "overlayId";
         overlayDom.style.width = "100%";
 
+        //! inject the domNode
         overlayDom.appendChild(domNode);
 
         // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ioverlaywidget.html
-        const overlayWidget = {
+        const overlayWidget: monaco.editor.IOverlayWidget = {
             getId: () => "overlay.zone.widget",
             getDomNode: () => overlayDom,
             getPosition: () => null,
@@ -47,7 +52,7 @@ export class ZoneWidget implements monaco.IDisposable {
             const element = elements[0];
             if (!element) return;
             const { height } = element.contentRect;
-            zone.heightInPx = height;
+            zone.heightInPx = height; // update the height
             layoutZone();
         });
         ro.observe(domNode, { box: "border-box" });

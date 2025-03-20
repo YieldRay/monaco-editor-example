@@ -50,6 +50,7 @@ export function registerInlineChat(
         keybindings,
         contextMenuGroupId,
         ...descriptor,
+        // show the component after the current cursor line
         run: () => {
             const currentLineNumber = editor.getPosition()?.lineNumber ?? 0;
             zw.afterLineNumber = currentLineNumber;

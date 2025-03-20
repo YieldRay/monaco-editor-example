@@ -2,6 +2,9 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState, type State } from "./state";
 import { triggerInlineSuggest, type addEditorAction } from "./addition";
 
+/**
+ * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions
+ */
 export type ProvideInlineCompletions = (
     model: monaco.editor.ITextModel,
     position: monaco.Position,
@@ -72,6 +75,7 @@ export function registerCompletion(
     };
 }
 
+// use CustomEvent<T> to replace the Event, provide more type information
 interface AddEventListener {
     (type: "change", callback: $EventListenerOrEventListenerObject<State> | null): void;
     (type: "error", callback: $EventListenerOrEventListenerObject<unknown> | null): void;

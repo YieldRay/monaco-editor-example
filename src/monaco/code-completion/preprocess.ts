@@ -1,3 +1,6 @@
+// this may just a demo implementation
+// to support more features, you may need to implement more
+
 const CURSOR_PLACEHOLDER = "<|developer_cursor_is_here|>";
 
 function insertCursorPlaceholder(textBeforeCursor: string, textAfterCursor: string) {

@@ -2,8 +2,9 @@ import { openrouter } from "../free-ai";
 import { inlineChat } from "./completion";
 import { formatMaybeMarkdownSyntax } from "../code-completion/postprocess";
 
-const placeholder = (afterLineNumber: number) => `<|line_${afterLineNumber}_placeholder_is_here|>`;
-
+/**
+ * this is just a demo, you can replace it with your own AI model
+ */
 export const inlineChatDemo = inlineChat(
     async (userPromptText, afterLineNumber, beforeLineText, afterLineText, executeEdit, signal) => {
         const json = await openrouter(
@@ -55,3 +56,5 @@ export const inlineChatDemo = inlineChat(
         executeEdit(completionText);
     }
 );
+
+const placeholder = (afterLineNumber: number) => `<|line_${afterLineNumber}_placeholder_is_here|>`;

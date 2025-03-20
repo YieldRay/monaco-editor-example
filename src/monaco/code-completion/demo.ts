@@ -1,4 +1,3 @@
-import type { ProvideInlineCompletions } from "./register";
 import { chatCompletions } from "./completion";
 import { createPromptMessages, systemMessage } from "./preprocess";
 import { extractFirstCodeBlockContent } from "./postprocess";
@@ -7,8 +6,8 @@ import { pollinations, openrouter, nahcrof } from "../free-ai";
 /**
  * this is just a demo, you can replace it with your own AI model
  */
-export function chatCompletionsDemo(): ProvideInlineCompletions {
-    return chatCompletions(async (textBeforeCursor, textAfterCursor, filepath, signal) => {
+export const chatCompletionsDemo = chatCompletions(
+    async (textBeforeCursor, textAfterCursor, filepath, signal) => {
         const params = {
             messages: createPromptMessages({
                 textBeforeCursor,
@@ -36,8 +35,9 @@ export function chatCompletionsDemo(): ProvideInlineCompletions {
                 return extractFirstCodeBlockContent(json.choices[0].message.content);
             }
         );
-    }, true);
-}
+    },
+    true
+);
 
 async function fallbacks<T>(...fns: Array<() => Promise<T>>) {
     for (const fn of fns) {

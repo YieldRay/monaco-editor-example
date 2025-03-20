@@ -1,3 +1,5 @@
+// LLMs may reply markdown code block, we need to strip it out
+
 export function formatMaybeMarkdownSyntax(text: string) {
     let result = "";
 

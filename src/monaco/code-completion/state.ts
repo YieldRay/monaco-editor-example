@@ -198,7 +198,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             );
     }
 
-    dispose(): void {
+    public dispose(): void {
         Reflect.deleteProperty(this.editor, EDITOR_KEY);
         this.registerInlineCompletionsProviderResult?.dispose();
         clearTimeout(this.lastInlineCompletionTO);
