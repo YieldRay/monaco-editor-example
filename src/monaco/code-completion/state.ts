@@ -99,6 +99,9 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             // we only provide completions for the registered editor (model)
             if (model !== this.editor.getModel()) return null;
 
+            // do not trigger when content length is too few
+            if (model.getValueLength() < 5) return null;
+
             if (this.triggerPosition === "end") {
                 // only trigger the completion when the cursor is at the end of the line
                 // after the cursor there can be only whitespace or nothing

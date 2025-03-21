@@ -27,8 +27,14 @@ export function createFIMPayload(prefix: string, suffix: string) {
  * postprocess
  */
 export function stripFIM(text: string) {
-    const label = "<file_separator>";
-    if (text.endsWith(label)) return text.slice(0, -label.length);
-
-    return label;
+    let label: string;
+    label = "<fim_separator>";
+    if (text.endsWith(label)) text = text.slice(0, -label.length);
+    label = "</fim_middle></fim_suffix>";
+    if (text.endsWith(label)) text = text.slice(0, -label.length);
+    label = "<fim_sep>";
+    if (text.endsWith(label)) text = text.slice(0, -label.length);
+    label = "<fim_empty>";
+    if (text.endsWith(label)) text = text.slice(0, -label.length);
+    return text;
 }
