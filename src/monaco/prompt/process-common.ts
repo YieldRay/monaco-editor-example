@@ -3,7 +3,7 @@
  *
  * It add an extra user->assistant chat to hint the LLM
  */
-const CURSOR_PLACEHOLDER = "<|developer_cursor_is_here|>";
+export const CURSOR_PLACEHOLDER = "<|developer_cursor_is_here|>";
 
 function createUserMessage(context: {
     textBeforeCursor?: string;

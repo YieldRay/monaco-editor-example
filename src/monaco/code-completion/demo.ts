@@ -34,7 +34,7 @@ export const chatCompletionsDemo = chatCompletions(
             }
         );
     },
-    true
+    { force: true, lru: 20 }
 );
 
 async function fallbacks<T>(...fns: Array<() => Promise<T>>) {
