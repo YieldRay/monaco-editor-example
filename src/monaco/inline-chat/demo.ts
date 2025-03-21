@@ -1,6 +1,6 @@
 import { openrouter } from "../free-ai";
 import { inlineChat } from "./completion";
-import { formatMaybeMarkdownSyntax } from "../code-completion/postprocess";
+import { stripMaybeMarkdown } from "../prompt/process-common";
 
 /**
  * this is just a demo, you can replace it with your own AI model
@@ -52,7 +52,7 @@ export const inlineChatDemo = inlineChat(
             signal
         );
 
-        const completionText = formatMaybeMarkdownSyntax(json.choices[0].message.content);
+        const completionText = stripMaybeMarkdown(json.choices[0].message.content);
         executeEdit(completionText);
     }
 );

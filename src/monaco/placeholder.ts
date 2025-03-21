@@ -15,9 +15,9 @@ export class PlaceholderContentWidget implements monaco.editor.IContentWidget {
 
     private editor: monaco.editor.ICodeEditor;
 
-    constructor(placeholder: string, editor: monaco.editor.ICodeEditor) {
-        this.placeholder = placeholder;
+    constructor(editor: monaco.editor.ICodeEditor, placeholder: string) {
         this.editor = editor;
+        this.placeholder = placeholder;
         // register a listener for editor code changes
         editor.onDidChangeModelContent(() => this.onDidChangeModelContent());
         // ensure that on initial load the placeholder is shown

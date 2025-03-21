@@ -80,6 +80,7 @@ export class ZoneWidget implements monaco.IDisposable {
         };
 
         this.dispose = () => {
+            editor.removeOverlayWidget(overlayWidget);
             editor.changeViewZones((changeAccessor) => {
                 changeAccessor.removeZone(zone.id!);
             });

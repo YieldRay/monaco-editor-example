@@ -9,6 +9,7 @@ import { registerCompletion } from "../monaco/code-completion";
 import { chatCompletionsDemo } from "../monaco/code-completion/demo";
 import { registerInlineChat } from "../monaco/inline-chat/";
 import { inlineChatDemo } from "../monaco/inline-chat/demo";
+import { PlaceholderContentWidget } from "../monaco/placeholder";
 
 interface Props {
     value?: string;
@@ -43,11 +44,14 @@ export const Editor: FC<Props> = ({ value = "", onChange, onState }: Props) => {
         window.editor = editor;
         editorRef.current = editor;
 
+        new PlaceholderContentWidget(editor, "Use Ctrl + I to generate code");
+
         const completion = registerCompletion(editor, {
             provideInlineCompletions: chatCompletionsDemo,
             timeout: 60_0000,
             loadingCursor: true,
             editorAction: true,
+            triggerPosition: "anywhere",
         });
         completion.addEventListener("change", (event) => {
             setState(event.detail);
