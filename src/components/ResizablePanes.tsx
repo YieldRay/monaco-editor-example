@@ -81,6 +81,10 @@ function InternalResizablePanes({
     gridTemplate: string;
     onSizeDelta: (delta: number) => void;
 } & React.HTMLAttributes<HTMLDivElement>) {
+    const DIR = ["gridTemplateColumns" as const, "gridTemplateRows" as const];
+    const [gridTemplateDirection, girdTemplateCrossDirection] =
+        direction === "horizontal" ? DIR : DIR.reverse();
+
     return (
         <div
             {...props}
@@ -88,8 +92,8 @@ function InternalResizablePanes({
                 overflow: "hidden",
                 ...style,
                 display: "grid",
-                [direction === "horizontal" ? "gridTemplateColumns" : "gridTemplateRows"]:
-                    gridTemplate,
+                [gridTemplateDirection]: gridTemplate,
+                [girdTemplateCrossDirection]: "minmax(0, 1fr)",
             }}
         >
             <div {...firstPaneProps}>{firstPane}</div>
