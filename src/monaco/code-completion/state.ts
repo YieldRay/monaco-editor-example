@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import type { ProvideInlineCompletions, RegisterCompletionOptions } from "./register";
-import { setCursorToLoading, addEditorAction } from "./addition";
+import { setCursorToLoading, addEditorAction, triggerInlineSuggest } from "./addition";
 
 const EDITOR_KEY = Symbol("EDITOR_KEY");
 const CANCELED = Symbol("CANCELED");
@@ -14,8 +14,6 @@ export type State =
 
 // TODO: fire more events, like onCompletionShown, onCompletionAccepted, onCompletionRejected, etc.
 
-// TODO: `triggerInlineSuggest` should trigger the completion even if the cursor is not at the end of the line
-
 /**
  * @internal
  * One editor can only have one state.
@@ -28,6 +26,7 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
     readonly editor: monaco.editor.IStandaloneCodeEditor;
     readonly delay: number;
     readonly timeout: number;
+    readonly manually: boolean;
     readonly triggerPosition: RegisterCompletionOptions["triggerPosition"];
     private provideInlineCompletions: ProvideInlineCompletions;
     private editorAction?: monaco.IDisposable;
@@ -39,13 +38,22 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         this.editor = editor;
         this.delay = options.delay || 400;
         this.timeout = options.timeout || 10_000;
-        this.triggerPosition = options.triggerPosition || "end";
+        this.manually = !!options.manually;
+        this.triggerPosition = options.triggerPosition
+            ? options.triggerPosition
+            : this.manually
+            ? "anywhere" // if `manually` set to true, defaults to "anywhere"
+            : "end"; // or default value is "end"
         this.provideInlineCompletions = options.provideInlineCompletions;
 
         if (options.editorAction) {
-            this.editorAction = addEditorAction(
-                typeof options.editorAction === "object" ? options.editorAction : {}
-            );
+            let actionOptions: Partial<monaco.editor.IActionDescriptor> = {
+                run: () => this.triggerManually(),
+            };
+            if (typeof options.editorAction === "object") {
+                actionOptions = { ...options.editorAction, ...actionOptions };
+            }
+            this.editorAction = addEditorAction(actionOptions);
         }
 
         if (options.loadingCursor) {
@@ -91,6 +99,14 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
         }
     }
 
+    /** trigger manually is called */
+    private manuallyFlag = false;
+    public triggerManually() {
+        this.manuallyFlag = true;
+        triggerInlineSuggest(this.editor);
+        // manuallyFlag will be set to false at function `provideInlineCompletions`
+    }
+
     private lastInlineCompletionTO?: ReturnType<typeof setTimeout>;
     private lastInlineCompletionCTS?: monaco.CancellationTokenSource;
     private cleanLastDelay?: VoidFunction;
@@ -99,8 +115,16 @@ export class EditorRegisteredState extends EventTarget implements monaco.IDispos
             // we only provide completions for the registered editor (model)
             if (model !== this.editor.getModel()) return null;
 
-            // do not trigger when content length is too few
-            if (model.getValueLength() < 5) return null;
+            if (this.manually) {
+                if (!this.manuallyFlag) {
+                    // manuallyFlag is false, not allowed to trigger
+                    return null;
+                }
+                this.manuallyFlag = false;
+            } else {
+                // do not trigger when content length is too few
+                if (model.getValueLength() < 5) return null;
+            }
 
             if (this.triggerPosition === "end") {
                 // only trigger the completion when the cursor is at the end of the line

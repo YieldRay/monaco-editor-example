@@ -16,6 +16,7 @@ export function addEditorAction({
     label = "Complete Code",
     contextMenuGroupId = "navigation",
     keybindings = [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space],
+    run = (editor) => triggerInlineSuggest(editor),
     ...descriptor
 }: Partial<monaco.editor.IActionDescriptor> = {}) {
     return monaco.editor.addEditorAction({
@@ -23,10 +24,8 @@ export function addEditorAction({
         label,
         contextMenuGroupId,
         keybindings,
+        run,
         ...descriptor,
-        run: (editor) => {
-            triggerInlineSuggest(editor);
-        },
     });
 }
 

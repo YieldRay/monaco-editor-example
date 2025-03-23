@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState, type State } from "./state";
-import { triggerInlineSuggest, type addEditorAction } from "./addition";
+import { type addEditorAction } from "./addition";
 
 /**
  * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions
@@ -13,7 +13,6 @@ export type ProvideInlineCompletions = (
 ) => monaco.languages.ProviderResult<monaco.languages.InlineCompletions>;
 
 export interface RegisterCompletionOptions {
-    language?: monaco.languages.LanguageSelector;
     /**
      * After the user stopped typing, how long should we wait before we start fetching the completion
      * @default 400
@@ -43,13 +42,19 @@ export interface RegisterCompletionOptions {
     /**
      * If provided, this action will be added to the editor
      */
-    editorAction?: boolean | Parameters<typeof addEditorAction>[0];
+    editorAction?: boolean | Omit<Partial<monaco.editor.IActionDescriptor>, "run">;
     /**
      * Check the cursor position before trigger the completion,
-     * by default it will only trigger the completion when the cursor is at the end of the line
-     * @default "end"
+     * by default it will only trigger the completion when the cursor is at the "end" of the line.
+     *
+     * Note: for convenience, when `manually` set to true, the default value will be "anywhere".
      */
     triggerPosition?: "anywhere" | "end";
+    /**
+     * Only can trigger completion manually, if set to true,
+     * you must call the returned `trigger` method manually.
+     */
+    manually?: boolean;
 }
 
 /**
@@ -69,7 +74,7 @@ export function registerCompletion(
         /**
          * Trigger inline suggest manually
          */
-        trigger: () => triggerInlineSuggest(editor),
+        trigger: () => state.triggerManually.bind(state),
         addEventListener: state.addEventListener.bind(state) as AddEventListener,
         removeEventListener: state.removeEventListener.bind(state),
     };
