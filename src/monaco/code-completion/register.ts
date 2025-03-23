@@ -1,6 +1,5 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorRegisteredState, type State } from "./state";
-import { type addEditorAction } from "./addition";
 
 /**
  * @link https://microsoft.github.io/monaco-editor/docs.html#interfaces/languages.InlineCompletionsProvider.html#provideInlineCompletions.provideInlineCompletions

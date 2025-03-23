@@ -14,23 +14,24 @@ export class PlaceholderContentWidget implements monaco.editor.IContentWidget {
     private placeholder: string;
 
     private editor: monaco.editor.ICodeEditor;
+    private listener: monaco.IDisposable;
 
     constructor(editor: monaco.editor.ICodeEditor, placeholder: string) {
         this.editor = editor;
         this.placeholder = placeholder;
         // register a listener for editor code changes
-        editor.onDidChangeModelContent(() => this.onDidChangeModelContent());
+        this.listener = editor.onDidChangeModelContent(this.onDidChangeModelContent);
         // ensure that on initial load the placeholder is shown
         this.onDidChangeModelContent();
     }
 
-    onDidChangeModelContent(): void {
+    onDidChangeModelContent: VoidFunction = () => {
         if (this.editor.getValue() === "") {
             this.editor.addContentWidget(this);
         } else {
             this.editor.removeContentWidget(this);
         }
-    }
+    };
 
     getId(): string {
         return PlaceholderContentWidget.ID;
@@ -60,6 +61,7 @@ export class PlaceholderContentWidget implements monaco.editor.IContentWidget {
     }
 
     dispose(): void {
+        this.listener.dispose();
         this.editor.removeContentWidget(this);
     }
 }

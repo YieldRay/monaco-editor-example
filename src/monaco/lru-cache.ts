@@ -82,6 +82,9 @@ export class LRUCache<K, V>
     }
 }
 
+/**
+ * @internal
+ */
 class DLinkedList<K, V> {
     prev: DLinkedList<K, V> | null = null;
     next: DLinkedList<K, V> | null = null;

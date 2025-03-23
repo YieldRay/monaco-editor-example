@@ -18,7 +18,7 @@ body,
         height: 8px;
         transition: all 0.3s;
     }
-    /* The track of scrooll bar */
+    /* The track of scroll bar */
     &::-webkit-scrollbar-track {
         background: transparent;
     }
