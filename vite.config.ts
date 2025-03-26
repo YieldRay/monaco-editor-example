@@ -26,6 +26,15 @@ export default defineConfig({
     },
     build: {
         target: ["es2022"],
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes("node_modules/react-dom")) return "react";
+                    if (id.includes("node_modules/react")) return "react";
+                    if (id.includes("node_modules/monaco-editor")) return "monaco-editor";
+                },
+            },
+        },
     },
     esbuild: {
         drop: ["console", "debugger"],
